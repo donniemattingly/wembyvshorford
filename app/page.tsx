@@ -73,7 +73,7 @@ export default async function Home() {
             }
           </div>
           <div
-            className="flex flex-row text-lg w-1/2 justify-between font-normal pt-24 underline text-cyan-400">
+            className="flex flex-row text-lg md:w-1/2 w-[18rem] justify-between font-normal pt-24 underline text-cyan-400">
             <span>
               <a href={horfordUrl}> Horford: {horford.winShares} </a>
             </span>

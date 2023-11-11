@@ -20,7 +20,7 @@ function TimingBreakdown({ pronoun, winShares, games, target}: TimingBreakdownPr
   const remainingSeasonsString = remainingSeasons.toLocaleString(undefined, { maximumFractionDigits: 1 });
   
   return (
-    <p className='p-4'>
+    <p className='py-4'>
       At this rate it will take {pronoun} {remainingGamesString} more games
       or {remainingSeasonsString} complete seasons (Assuming he plays
       all {gamesPerSeason} games).

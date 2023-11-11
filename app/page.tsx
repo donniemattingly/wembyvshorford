@@ -1,13 +1,18 @@
 import Image from 'next/image'
 
-const {JSDOM} = require("jsdom");
+import { JSDOM } from 'jsdom';
+import { strict as assert } from 'assert';
 
+const cacheTime = 60 * 60 * 8 // 8 hours (in seconds)
+const fetchParams = { next: { revalidate: cacheTime }};
 
 const getWinShareFromHtml = (html: string): string => {
     const dom = new JSDOM(html);
     const document = dom.window.document;
     let winSharesTipElement = document.querySelector('span.poptip[data-tip*="Win Shares"]');
-    return winSharesTipElement.parentElement.lastChild.innerHTML
+    const winShares = winSharesTipElement?.parentElement?.lastChild?.textContent;
+    assert(winShares != null, "Couldn't find win shares");
+    return winShares;
 }
 
 const horfordUrl = 'https://www.basketball-reference.com/players/h/horfoal01.html';
@@ -17,8 +22,8 @@ const fetchData = async () => {
     try {
         // Fetch both URLs in parallel
         const [wembyResponse, horfordResponse] = await Promise.all([
-            fetch(wembyUrl),
-            fetch(horfordUrl)
+            fetch(wembyUrl, fetchParams),
+            fetch(horfordUrl, fetchParams)
         ]);
 
         // Parse the JSON response

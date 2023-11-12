@@ -5,7 +5,7 @@ import React from "react";
 // App router includes @vercel/og.
 // No need to install it.
 
-export const runtime = 'edge';
+// export const runtime = 'edge';
 
 export async function GET() {
     const data = await fetchData();

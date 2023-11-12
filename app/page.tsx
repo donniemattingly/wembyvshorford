@@ -1,60 +1,7 @@
 import React from 'react';
-
-import { JSDOM } from 'jsdom';
-import { strict as assert } from 'assert';
+import {fetchData, horfordUrl, wembyUrl} from "@/app/bbref-api";
 import TimingBreakdown from '@/components/TimingBreakdown';
-
-
-const horfordUrl = 'https://www.basketball-reference.com/players/h/horfoal01.html';
-const wembyUrl = 'https://www.basketball-reference.com/players/w/wembavi01.html'
-const cacheTime = 60 * 60 * 8 // 8 hours (in seconds)
-const fetchParams = { next: { revalidate: cacheTime } };
-type PopTip = 'Win Shares' | 'Games';
-
-const readPopTip = (document: Document, dataTip: PopTip, exact: boolean): number => {
-  const query = `span.poptip[data-tip${exact ? '' : '*' }="${dataTip}"]`;
-  const element = document.querySelector(query);
-  const value = element?.parentElement?.lastChild?.textContent;
-  assert(value != null, `Couldn't find ${dataTip}`);
-  return parseFloat(value);
-}
-
-const getDataFromHtml = (html: string) => {
-  const dom = new JSDOM(html);
-  const document = dom.window.document;
-  const data = {
-    winShares: readPopTip(document, 'Win Shares', false),
-    games: readPopTip(document, 'Games', true),
-  };
-  return data;
-}
-const fetchData = async () => {
-
-  try {
-    // Fetch both URLs in parallel
-    const [wembyResponse, horfordResponse] = await Promise.all([
-      fetch(wembyUrl, fetchParams),
-      fetch(horfordUrl, fetchParams)
-    ]);
-
-    // Parse the JSON response
-    const wembyHtml = await wembyResponse.text();
-    const horfordHtml = await horfordResponse.text();
-
-    const wemby = getDataFromHtml(wembyHtml);
-    const horford = getDataFromHtml(horfordHtml)
-
-    return {
-      wemby,
-      horford,
-    };
-
-  } catch (error) {
-    console.error('Error fetching data:', error);
-  }
-
-  return null;
-}
+import Head from "next/head";
 
 export default async function Home() {
   const data = await fetchData();
@@ -62,6 +9,14 @@ export default async function Home() {
     const { wemby, horford } = data;
     return (
       <>
+        <Head>
+          <title>Wemby vs Horford</title>
+          <meta property="og:title" content="Wemby vs Horford" />
+          <meta
+              property="og:image"
+              content="https://wembyvshorford.vercel.app/api/og"
+          />
+        </Head>
         <main className="flex min-h-screen flex-col items-center justify-center p-24">
           <div>
             Does Victor Wembanyama have more career win shares than Al Horford?

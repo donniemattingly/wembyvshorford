@@ -25,16 +25,16 @@ export async function GET() {
                     }}
                 >
                     <div tw="flex flex-col items-center justify-center">
-                        <div tw="flex flex-col w-full py-12 px-4 justify-between text-white">
-                            <div tw='text-5xl'>
+                        <div tw="flex flex-col w-full py-12 px-4 justify-between text-white items-center">
+                            <div tw='text-5xl text-center'>
                                 Does Victor Wembanyama have more career win shares than Al Horford?
                             </div>
                             {horford.winShares > wemby.winShares
                                 ? <h1 tw='text-9xl font-extrabold'> No </h1>
                                 : <h1 tw='text-9xl font-extrabold'> Yes </h1>
                             }
-                            <div tw="flex flex-col w-1/2 text-4xl font-normal text-cyan-400">
-                                <p>Horford: {horford.winShares}</p>
+                            <div tw="flex flex-row text-4xl font-normal text-cyan-400 text-center items-center">
+                                <p tw='pr-8'>Horford: {horford.winShares}</p>
                                 <p>Wembanyama: {wemby.winShares}</p>
                             </div>
                         </div>

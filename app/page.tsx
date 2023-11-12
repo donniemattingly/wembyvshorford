@@ -9,14 +9,6 @@ export default async function Home() {
     const { wemby, horford } = data;
     return (
       <>
-        <Head>
-          <title>Wemby vs Horford</title>
-          <meta property="og:title" content="Wemby vs Horford" />
-          <meta
-              property="og:image"
-              content="https://wembyvshorford.vercel.app/api/og"
-          />
-        </Head>
         <main className="flex min-h-screen flex-col items-center justify-center p-24">
           <div>
             Does Victor Wembanyama have more career win shares than Al Horford?

@@ -7,6 +7,9 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Wemby vs Horford',
   description: 'Who has the most career win shares?',
+  openGraph: {
+    images: 'https://wembyvshorford.vercel.app/api/og'
+  }
 }
 
 export default function RootLayout({

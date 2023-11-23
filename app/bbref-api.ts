@@ -4,8 +4,8 @@ import { strict as assert } from 'assert';
 
 export const horfordUrl = 'https://www.basketball-reference.com/players/h/horfoal01.html';
 export const wembyUrl = 'https://www.basketball-reference.com/players/w/wembavi01.html'
-const cacheTime = 60 * 60 * 8 // 8 hours (in seconds)
-const fetchParams = { next: { revalidate: cacheTime } };
+const cacheTime = 60 * 5 // 5 min (in seconds)
+const fetchParams: RequestInit = { cache: 'no-store', next: { revalidate: cacheTime } };
 type PopTip = 'Win Shares' | 'Games';
 
 const readPopTip = (document: Document, dataTip: PopTip, exact: boolean): number => {

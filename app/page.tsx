@@ -1,5 +1,5 @@
 import React from 'react';
-import {fetchData, horfordUrl, wembyUrl} from "@/app/bbref-api";
+import {fetchData, horfordUrl, wembyUrl} from "@/app/bbref-api.server";
 import TimingBreakdown from '@/components/TimingBreakdown';
 import Head from "next/head";
 

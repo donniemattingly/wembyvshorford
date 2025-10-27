@@ -1,5 +1,5 @@
 import {ImageResponse} from 'next/og';
-import {fetchData, horfordUrl, wembyUrl} from "@/app/bbref-api";
+import {fetchData, horfordUrl, wembyUrl} from "@/app/bbref-api.server";
 import TimingBreakdown from "@/components/TimingBreakdown";
 import React from "react";
 // App router includes @vercel/og.

@@ -7,6 +7,8 @@ import React from "react";
 
 // export const runtime = 'edge';
 
+export const revalidate = 300; // Revalidate every 5 minutes
+
 export async function GET() {
     const data = await fetchData();
     if (data !== null) {

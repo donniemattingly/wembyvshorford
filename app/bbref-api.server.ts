@@ -4,9 +4,10 @@ import { strict as assert } from 'assert';
 
 export const horfordUrl = 'https://www.basketball-reference.com/players/h/horfoal01.html';
 export const wembyUrl = 'https://www.basketball-reference.com/players/w/wembavi01.html'
-const cacheTime = 60 * 5 // 5 min (in seconds)
+
+// Don't cache at fetch level - let page-level ISR (revalidate = 300) control freshness
 const fetchParams: RequestInit = {
-    next: { revalidate: cacheTime }
+    cache: 'no-store'
 };
 
 type PopTip = 'Win Shares' | 'Games';

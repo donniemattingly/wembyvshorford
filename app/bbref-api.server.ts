@@ -5,9 +5,9 @@ import { strict as assert } from 'assert';
 export const horfordUrl = 'https://www.basketball-reference.com/players/h/horfoal01.html';
 export const wembyUrl = 'https://www.basketball-reference.com/players/w/wembavi01.html'
 
-// Don't cache at fetch level - let page-level ISR (revalidate = 300) control freshness
+// Let fetch cache results - page is revalidated via daily cron job
 const fetchParams: RequestInit = {
-    cache: 'no-store'
+    cache: 'force-cache'
 };
 
 type PopTip = 'Win Shares' | 'Games';

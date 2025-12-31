@@ -7,7 +7,8 @@ import React from "react";
 
 // export const runtime = 'edge';
 
-export const revalidate = 300; // Revalidate every 5 minutes
+// No time-based revalidation - regenerated via daily cron job
+export const revalidate = false;
 
 export async function GET() {
     const data = await fetchData();

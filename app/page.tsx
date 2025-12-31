@@ -3,7 +3,8 @@ import {fetchData, horfordUrl, wembyUrl} from "@/app/bbref-api.server";
 import TimingBreakdown from '@/components/TimingBreakdown';
 import Head from "next/head";
 
-export const revalidate = 300; // Revalidate every 5 minutes
+// No time-based revalidation - page is regenerated via daily cron job
+export const revalidate = false;
 
 export default async function Home() {
   const data = await fetchData();

@@ -4,13 +4,5 @@
       "path": "/api/revalidate",
       "schedule": "0 9 * * *"
     }
-  ],
-  "functions": {
-    "app/**/*.ts": {
-      "runtime": "nodejs20.x"
-    },
-    "app/**/*.tsx": {
-      "runtime": "nodejs20.x"
-    }
-  }
+  ]
 }

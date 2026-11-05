@@ -1,7 +1,7 @@
 import React from 'react';
 import {fetchData, horfordUrl, wembyUrl} from "@/app/bbref-api.server";
 import TimingBreakdown from '@/components/TimingBreakdown';
-import Head from "next/head";
+import SeasonProgress from '@/components/SeasonProgress';
 
 // No time-based revalidation - page is regenerated via daily cron job
 export const revalidate = false;
@@ -9,11 +9,14 @@ export const revalidate = false;
 export default async function Home() {
   const data = await fetchData();
   if (data !== null) {
-    const { wemby, horford } = data;
+    const { season, wemby, horford } = data;
+    const updated = new Date().toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/New_York',
+    });
     return (
       <>
-        <main className="flex min-h-screen flex-col items-center justify-center p-24">
-          <div>
+        <main className="flex min-h-screen flex-col items-center justify-center p-8 md:p-24">
+          <div className='text-center'>
             Does Victor Wembanyama have more career win shares than Al Horford?
           </div>
           <div className='text-9xl font-extrabold pt-24'>
@@ -31,9 +34,18 @@ export default async function Home() {
               <a href={wembyUrl}> Wembanyama: {wemby.winShares} </a>
             </span>
           </div>
-          <TimingBreakdown pronoun="him" winShares={wemby.winShares} games={wemby.games} target={horford.winShares} />
+          <SeasonProgress season={season} wemby={wemby} horford={horford} />
+          <TimingBreakdown
+            winShares={wemby.winShares}
+            games={wemby.games}
+            target={horford.winShares}
+            seasonWinShares={wemby.season?.winShares}
+            seasonGames={wemby.season?.games}
+          />
         </main>
-        <footer> Proudly built with Next.js</footer>
+        <footer className='pb-4 text-center text-sm text-neutral-500'>
+          Stats from Basketball Reference. Updated {updated}.
+        </footer>
       </>
     )
   }

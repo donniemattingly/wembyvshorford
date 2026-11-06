@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 const GAMES_PER_SEASON = 82;
 
-const format = (value: number) => value.toLocaleString("en-US", { maximumFractionDigits: 1 });
+const format = (value: number) => value.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const seasonSpan = (startYear: number) => `${startYear}–${String(startYear + 1).slice(-2)}`;
 
 // Games needed to close the gap at a win-shares-per-game rate, or null if that rate never gets there.
@@ -27,9 +27,18 @@ export default async function Home() {
   const thisSeason = wemby.seasons.find((s) => s.season === season);
   const lastSeason = wemby.seasons.filter((s) => s.season !== season).at(-1);
   const lastSeasonWs = lastSeason?.winShares ?? 0;
-  const seasonsToGo = lastSeasonWs > 0 ? Math.ceil(gap / lastSeasonWs) : Infinity;
+  // Count seasons from the one after the last finished season. If that season is already under way, its
+  // partial total is replaced by a full repeat rather than added on top of one.
+  const wembyBeforeNext = wemby.winShares - (thisSeason?.winShares ?? 0);
+  const seasonsToGo =
+    lastSeasonWs > 0 ? Math.max(Math.ceil((horford.winShares - wembyBeforeNext) / lastSeasonWs), 1) : Infinity;
   const lastStart = Number.parseInt(lastSeason?.season.slice(0, 4) ?? "", 10);
   const crossover = Number.isFinite(seasonsToGo) && Number.isFinite(lastStart) ? seasonSpan(lastStart + seasonsToGo) : "—";
+  const lastLabel = Number.isFinite(lastStart) ? seasonSpan(lastStart) : "LAST SEASON";
+
+  // Horford's finished seasons, and the career season he is in (or about to start).
+  const horfordInSeason = horford.seasons.some((s) => s.season === season);
+  const horfordDone = horford.seasons.length - (horfordInSeason ? 1 : 0);
 
   const careerPace = gamesToCatch(gap, wemby.winShares, wemby.games);
   const seasonPace = thisSeason ? gamesToCatch(gap, thisSeason.winShares, thisSeason.games) : null;
@@ -73,7 +82,7 @@ export default async function Home() {
         <div className="hero-rule" />
         <p className="dek">
           Wembanyama is already a Defensive Player of the Year and arguably the best player on the planet. Horford&apos;s
-          argument is simpler: 19 seasons already happened.
+          argument is simpler: {horfordDone} seasons already happened.
         </p>
       </section>
 
@@ -116,7 +125,7 @@ export default async function Home() {
           </div>
           <article className="player player-horford">
             <div className="player-topline">
-              <span>SEASON 20: LOADING</span>
+              <span>{horfordInSeason ? `SEASON ${horfordDone + 1}: IN PROGRESS` : `SEASON ${horfordDone + 1}: LOADING`}</span>
               <span>GSW · C/F</span>
             </div>
             <img className="headshot" src="https://cdn.nba.com/headshots/nba/latest/1040x760/201143.png" alt="Al Horford" />
@@ -172,18 +181,25 @@ export default async function Home() {
           <p>ONE HONESTLY SIMPLE ASSUMPTION</p>
         </div>
         <div className="projection-grid">
-          <p className="kicker">IF WEMBY REPEATS LAST SEASON</p>
+          <p className="kicker">{caught ? "THE CHASE IS OVER" : `IF WEMBY REPEATS ${lastLabel}`}</p>
           <p className="big-number">{caught ? "NOW" : crossover}</p>
           <p className="big-label">
             CROSSOVER
             <br />
             SEASON
           </p>
-          <p className="projection-copy">
-            Wembanyama produced <strong>{lastSeasonWs.toFixed(1)} Win Shares in {lastSeason?.season ?? "his last season"}.</strong>{" "}
-            Repeat that every year and freeze Horford at {format(horford.winShares)}, and Wemby passes him during{" "}
-            {crossover}. Horford, inconveniently, has not frozen.
-          </p>
+          {caught ? (
+            <p className="projection-copy">
+              Wembanyama has <strong>{format(wemby.winShares)} career Win Shares</strong> to Horford&apos;s{" "}
+              {format(horford.winShares)}. The static target has been hit.
+            </p>
+          ) : (
+            <p className="projection-copy">
+              Wembanyama produced <strong>{format(lastSeasonWs)} Win Shares in {lastLabel}.</strong> Repeat that every
+              season from here and freeze Horford at {format(horford.winShares)}, and Wemby passes him during{" "}
+              {crossover}. Horford, inconveniently, has not frozen.
+            </p>
+          )}
         </div>
         {!caught && (careerPace != null || seasonPace != null) && (
           <div className="pace-grid">

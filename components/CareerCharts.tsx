@@ -103,10 +103,15 @@ export default function CareerCharts({ wemby, horford }: { wemby: Player; horfor
             <i className="bar-horford" /> HORFORD
           </span>
         </div>
-        <p className="chart-note">
-          By year three, Wemby was at 10.0 Win Shares; Horford was at 10.9. Similar output. Very different ways of
-          getting there.
-        </p>
+        {wemby.seasons[2] && horfordEarly[2] && (
+          <p className="chart-note">
+            In year three, Wemby put up {wemby.seasons[2].winShares.toFixed(1)} Win Shares; Horford put up{" "}
+            {horfordEarly[2].winShares.toFixed(1)}.{" "}
+            {Math.abs(wemby.seasons[2].winShares - horfordEarly[2].winShares) <= 1.5
+              ? "Similar output. Very different ways of getting there."
+              : "Very different ways of getting there."}
+          </p>
+        )}
       </article>
     </div>
   );

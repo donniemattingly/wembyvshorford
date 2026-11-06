@@ -4,6 +4,8 @@ import ModelProjection from "@/components/ModelProjection";
 import SeasonProgress from "@/components/SeasonProgress";
 import { type StoredProjection, projectCrossover } from "@/lib/model/crossover";
 import projectionData from "@/lib/model/projection.json";
+import type { Metadata } from "next";
+import { cardPath } from "@/lib/og/card";
 import { seasonInProgress, getCareerStats, horfordUrl, wembyUrl } from "@/lib/stats.server";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +13,19 @@ export const dynamic = "force-dynamic";
 const format = (value: number) => value.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 const projection = projectionData as StoredProjection;
+
+// The share card URL carries the current numbers, so link previews that cache by URL pick up new ones.
+export async function generateMetadata(): Promise<Metadata> {
+  const { wemby, horford } = await getCareerStats();
+  const caught = wemby.winShares >= horford.winShares;
+  const image = cardPath({ wemby: wemby.winShares, horford: horford.winShares });
+  const title = `Has Victor Wembanyama caught Al Horford? ${caught ? "Yes." : "Not yet."}`;
+  const description = `Career win shares: Wembanyama ${format(wemby.winShares)}, Horford ${format(horford.winShares)}.`;
+  return {
+    openGraph: { title, description, images: [{ url: image, width: 1200, height: 630 }] },
+    twitter: { card: "summary_large_image", title, description, images: [image] },
+  };
+}
 
 export default async function Home() {
   const stats = await getCareerStats();

@@ -1,4 +1,5 @@
 import handler from "vinext/server/fetch-handler";
+import { recordEntry } from "@/lib/model/tracker";
 import { serveCard } from "@/lib/og/render";
 import { STATS_KEY, refreshIfNeeded, scrapeCareerStats } from "@/lib/stats.server";
 
@@ -26,9 +27,11 @@ export default {
   // Daily refresh from Basketball Reference (see triggers.crons in wrangler.jsonc).
   async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext) {
     ctx.waitUntil(
-      scrapeCareerStats().then((stats) =>
-        env.VINEXT_KV_CACHE.put(STATS_KEY, JSON.stringify(stats), { metadata: { refreshedAt: stats.updatedAt } }),
-      ),
+      scrapeCareerStats().then(async (stats) => {
+        await env.VINEXT_KV_CACHE.put(STATS_KEY, JSON.stringify(stats), { metadata: { refreshedAt: stats.updatedAt } });
+        // Log the model's outlook after each new game for the /model page.
+        await recordEntry(env.VINEXT_KV_CACHE, stats);
+      }),
     );
   },
 } satisfies ExportedHandler<Env>;

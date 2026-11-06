@@ -2002,3 +2002,53 @@ footer p:last-child {
     font-size: 22px;
   }
 }
+
+/* Game-by-game tracker on /model */
+.tracker {
+  position: relative;
+  margin-top: 28px;
+}
+.tracker svg {
+  display: block;
+  overflow: visible;
+}
+.tracker .line {
+  fill: none;
+  stroke: var(--volt);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+.tracker .even {
+  stroke: var(--paper);
+  stroke-dasharray: 4 5;
+  opacity: 0.5;
+}
+.tracker .dot {
+  pointer-events: none;
+  fill: var(--ink);
+  stroke: var(--volt);
+  stroke-width: 2;
+}
+.tracker .dot.last {
+  fill: var(--volt);
+}
+.tracker .hit {
+  fill: transparent;
+}
+.tracker g:hover .dot {
+  fill: var(--volt);
+}
+.tracker .tip {
+  transform: translate(-50%, -100%);
+}
+.tracker-table td small {
+  opacity: 0.6;
+  margin-top: 5px;
+  font: 400 12px/1 Arial, sans-serif;
+  display: block;
+}
+@media (max-width: 800px) {
+  .tracker-table .wide {
+    display: none;
+  }
+}

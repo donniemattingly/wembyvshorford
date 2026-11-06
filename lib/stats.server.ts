@@ -1,4 +1,5 @@
 import { env } from "cloudflare:workers";
+import { recordEntry } from "@/lib/model/tracker";
 
 export const horfordUrl = "https://www.basketball-reference.com/players/h/horfoal01.html";
 export const wembyUrl = "https://www.basketball-reference.com/players/w/wembavi01.html";
@@ -166,6 +167,7 @@ export const refreshIfNeeded = async (kv: KVNamespace): Promise<void> => {
     await kv.put(REFRESH_LOCK_KEY, new Date().toISOString(), { expirationTtl: 3600 });
     const stats = await scrapeCareerStats();
     await kv.put(STATS_KEY, JSON.stringify(stats), { metadata: { refreshedAt: stats.updatedAt } });
+    await recordEntry(kv, stats);
   } catch (error) {
     console.error("Career stats refresh failed", error);
   }

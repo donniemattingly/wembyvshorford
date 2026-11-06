@@ -1,5 +1,5 @@
 import handler from "vinext/server/fetch-handler";
-import { STATS_KEY, scrapeCareerStats } from "@/lib/stats.server";
+import { STATS_KEY, refreshIfNeeded, scrapeCareerStats } from "@/lib/stats.server";
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
@@ -10,6 +10,7 @@ export default {
         url.hostname = "wembyvshorford.com";
         return Response.redirect(url, 308);
       }
+      if (request.method === "GET" && url.pathname === "/") ctx.waitUntil(refreshIfNeeded(env.VINEXT_KV_CACHE));
       return await handler.fetch(request, env, ctx);
     } catch (error) {
       console.error("Unhandled application error", error);

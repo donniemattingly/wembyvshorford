@@ -100,7 +100,7 @@ const parsePlayer = (html: string): Player => {
       return {
         season,
         winShares: readStat(row, "ws"),
-        games: readOptionalStat(row, "games") ?? undefined,
+        games: readOptionalStat(row, "games") ?? readOptionalStat(row, "g") ?? undefined,
         winSharesPer48: readOptionalStat(row, "ws_per_48"),
       };
     },
@@ -140,5 +140,29 @@ export const getCareerStats = async (): Promise<CareerStats> => {
     return isCareerStats(stats) ? stats : FALLBACK;
   } catch {
     return FALLBACK;
+  }
+};
+
+const REFRESH_LOCK_KEY = "career-stats:refresh-lock";
+const STALE_AFTER_MS = 26 * 60 * 60 * 1000;
+
+// True when KV holds nothing usable, is older than a day, or predates per-season games and WS/48.
+const needsRefresh = (stats: unknown): boolean => {
+  if (!isCareerStats(stats)) return true;
+  if (Date.now() - new Date(stats.updatedAt).getTime() > STALE_AFTER_MS) return true;
+  return stats.wemby.seasons.at(-1)?.games == null;
+};
+
+// Scrape out of band when KV is missing, stale or old-format, at most once an hour, so the page fixes
+// itself without waiting for the next daily cron.
+export const refreshIfNeeded = async (kv: KVNamespace): Promise<void> => {
+  try {
+    if (!needsRefresh(await kv.get(STATS_KEY, "json"))) return;
+    if (await kv.get(REFRESH_LOCK_KEY)) return;
+    await kv.put(REFRESH_LOCK_KEY, new Date().toISOString(), { expirationTtl: 3600 });
+    const stats = await scrapeCareerStats();
+    await kv.put(STATS_KEY, JSON.stringify(stats), { metadata: { refreshedAt: stats.updatedAt } });
+  } catch (error) {
+    console.error("Career stats refresh failed", error);
   }
 };

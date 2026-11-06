@@ -39,6 +39,7 @@ export default async function Home() {
   // Horford's finished seasons, and the career season he is in (or about to start).
   const horfordInSeason = horford.seasons.some((s) => s.season === season);
   const horfordDone = horford.seasons.length - (horfordInSeason ? 1 : 0);
+  const wembyDone = wemby.seasons.length - (thisSeason ? 1 : 0);
 
   const careerPace = gamesToCatch(gap, wemby.winShares, wemby.games);
   const seasonPace = thisSeason ? gamesToCatch(gap, thisSeason.winShares, thisSeason.games) : null;
@@ -67,8 +68,8 @@ export default async function Home() {
 
       <section className="hero shell" id="top">
         <div className="eyebrow">
-          <span>THE LONG CHASE</span>
-          <span>ISSUE NO. 01</span>
+          <span>CAREER WIN SHARES</span>
+          <span>REGULAR SEASON</span>
         </div>
         <h1>
           HAS VICTOR WEMBANYAMA
@@ -81,21 +82,20 @@ export default async function Home() {
         </div>
         <div className="hero-rule" />
         <p className="dek">
-          Wembanyama is already a Defensive Player of the Year and arguably the best player on the planet. Horford&apos;s
-          argument is simpler: {horfordDone} seasons already happened.
+          Career regular-season Win Shares for both players, updated daily from Basketball Reference.
         </p>
       </section>
 
       <section className="scoreboard shell" aria-labelledby="scoreboard-heading">
         <div className="section-label">
           <span>01</span>
-          <h2 id="scoreboard-heading">THE CEILING / THE RECEIPTS</h2>
+          <h2 id="scoreboard-heading">CAREER TOTALS</h2>
           <p>REGULAR SEASON · CAREER</p>
         </div>
         <div className="matchup">
           <article className="player player-wemby">
             <div className="player-topline">
-              <span>PURE &amp; ETHICAL</span>
+              <span>SEASON {wembyDone + 1}</span>
               <span>SAS · C</span>
             </div>
             <img
@@ -125,7 +125,7 @@ export default async function Home() {
           </div>
           <article className="player player-horford">
             <div className="player-topline">
-              <span>{horfordInSeason ? `SEASON ${horfordDone + 1}: IN PROGRESS` : `SEASON ${horfordDone + 1}: LOADING`}</span>
+              <span>SEASON {horfordDone + 1}</span>
               <span>GSW · C/F</span>
             </div>
             <img className="headshot" src="https://cdn.nba.com/headshots/nba/latest/1040x760/201143.png" alt="Al Horford" />
@@ -150,7 +150,7 @@ export default async function Home() {
         <div className="race">
           <div className="race-labels">
             <span>WEMBY {share.toFixed(1)}%</span>
-            <span>THE HORFORD LINE</span>
+            <span>HORFORD</span>
           </div>
           <div className="track">
             <div style={{ width: `${share}%` }}>
@@ -168,8 +168,8 @@ export default async function Home() {
       <section className="visuals shell" aria-labelledby="visuals-heading">
         <div className="section-label">
           <span>{n(2)}</span>
-          <h2 id="visuals-heading">TWO CAREER SHAPES</h2>
-          <p>ACCUMULATION &amp; ESCAPE VELOCITY</p>
+          <h2 id="visuals-heading">SEASON BY SEASON</h2>
+          <p>WIN SHARES BY CAREER YEAR</p>
         </div>
         <CareerCharts wemby={wemby} horford={horford} />
       </section>
@@ -177,8 +177,8 @@ export default async function Home() {
       <section className="projection shell" aria-labelledby="projection-heading">
         <div className="section-label inverse">
           <span>{n(3)}</span>
-          <h2 id="projection-heading">THE STATIC TARGET</h2>
-          <p>ONE HONESTLY SIMPLE ASSUMPTION</p>
+          <h2 id="projection-heading">PROJECTION</h2>
+          <p>HORFORD HELD AT HIS CURRENT TOTAL</p>
         </div>
         <div className="projection-grid">
           <p className="kicker">{caught ? "THE CHASE IS OVER" : `IF WEMBY REPEATS ${lastLabel}`}</p>
@@ -191,13 +191,12 @@ export default async function Home() {
           {caught ? (
             <p className="projection-copy">
               Wembanyama has <strong>{format(wemby.winShares)} career Win Shares</strong> to Horford&apos;s{" "}
-              {format(horford.winShares)}. The static target has been hit.
+              {format(horford.winShares)}. He has passed Horford.
             </p>
           ) : (
             <p className="projection-copy">
-              Wembanyama produced <strong>{format(lastSeasonWs)} Win Shares in {lastLabel}.</strong> Repeat that every
-              season from here and freeze Horford at {format(horford.winShares)}, and Wemby passes him during{" "}
-              {crossover}. Horford, inconveniently, has not frozen.
+              Wembanyama produced <strong>{format(lastSeasonWs)} Win Shares in {lastLabel}.</strong> At that rate, with
+              Horford held at {format(horford.winShares)}, he passes Horford during {crossover}.
             </p>
           )}
         </div>
@@ -224,29 +223,23 @@ export default async function Home() {
       <section className="notes shell">
         <div className="section-label">
           <span>{n(4)}</span>
-          <h2>SCOUTING THE NUMBER</h2>
-          <p>CONTEXT, NOT PROPHECY</p>
+          <h2>ABOUT THE NUMBERS</h2>
+          <p>METHOD</p>
         </div>
         <div className="note-grid">
           <div>
             <span>THE METRIC</span>
-            <p>
-              Win Shares estimates how many wins a player contributed. Useful, imperfect, and excellent for making this
-              specific website.
-            </p>
+            <p>Win Shares estimates how many of his team&apos;s wins a player accounted for. Regular season only.</p>
           </div>
           <div>
-            <span>THE ETHICAL HOOPS</span>
-            <p>
-              Wemby&apos;s phrase for varied, old-school team basketball: move it, change the picture, make the right
-              read.
-            </p>
+            <span>THE DATA</span>
+            <p>Career and season totals from Basketball Reference, refreshed once a day.</p>
           </div>
           <div>
-            <span>THE OLD MAN</span>
+            <span>THE PACE FIGURES</span>
             <p>
-              Horford was drafted one day before the first iPhone went on sale. Both eventually learned to shoot from
-              farther away.
+              Games needed at Wembanyama&apos;s Win Shares per game, this season and for his career, with Horford held
+              where he is. Early-season figures move a lot.
             </p>
           </div>
         </div>

@@ -26,11 +26,11 @@ export default function CareerCharts({ wemby, horford }: { wemby: Player; horfor
       <article className="trajectory-card">
         <div className="chart-heading">
           <div>
-            <span>CAREER TRAJECTORY</span>
+            <span>BY CAREER YEAR</span>
             <h3>
-              THE LONG
+              CUMULATIVE
               <br />
-              ACCUMULATION
+              WIN SHARES
             </h3>
           </div>
           <div className="legend">
@@ -50,7 +50,7 @@ export default function CareerCharts({ wemby, horford }: { wemby: Player; horfor
           <polyline className="wemby-line" points={points(wembyTotals, seasons, max)} />
           <circle className="wemby-dot" cx={wembyX} cy={330 - (wembyLatest / max) * 275} r="8" />
           <text className="alien-label" x={wembyX + 32} y={324 - (wembyLatest / max) * 275}>
-            ALIEN SIGNAL
+            WEMBY {wembyLatest.toFixed(1)}
           </text>
           <text className="axis-label" x="50" y="360">
             YEAR 1
@@ -59,19 +59,16 @@ export default function CareerCharts({ wemby, horford }: { wemby: Player; horfor
             YEAR {seasons}
           </text>
         </svg>
-        <p className="chart-note">
-          Horford says adding the three-pointer added years to his career. The career accepted the extension.
-        </p>
       </article>
 
       <article className="early-card">
         <div className="chart-heading">
           <div>
-            <span>FIRST THREE SEASONS</span>
+            <span>YEARS 1–3</span>
             <h3>
-              ORBITAL
+              SEASON
               <br />
-              VELOCITY
+              TOTALS
             </h3>
           </div>
           <b>WS / SEASON</b>
@@ -106,10 +103,7 @@ export default function CareerCharts({ wemby, horford }: { wemby: Player; horfor
         {wemby.seasons[2] && horfordEarly[2] && (
           <p className="chart-note">
             In year three, Wemby put up {wemby.seasons[2].winShares.toFixed(1)} Win Shares; Horford put up{" "}
-            {horfordEarly[2].winShares.toFixed(1)}.{" "}
-            {Math.abs(wemby.seasons[2].winShares - horfordEarly[2].winShares) <= 1.5
-              ? "Similar output. Very different ways of getting there."
-              : "Very different ways of getting there."}
+            {horfordEarly[2].winShares.toFixed(1)}.
           </p>
         )}
       </article>

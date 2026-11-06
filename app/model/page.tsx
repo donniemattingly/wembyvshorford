@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import Backtest from "@/components/model/Backtest";
+import GameTracker from "@/components/model/GameTracker";
 import ModelLab from "@/components/model/ModelLab";
 import { backtestLines, backtestNotes } from "@/lib/model/backtestSummary";
 import type { StoredProjection } from "@/lib/model/crossover";
 import projectionData from "@/lib/model/projection.json";
 import { cardPath } from "@/lib/og/card";
+import { getTrack } from "@/lib/model/tracker";
 import { getCareerStats } from "@/lib/stats.server";
+import { env } from "cloudflare:workers";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +37,7 @@ export default async function ModelPage() {
     timeZone: "America/New_York",
   }).format(new Date(stats.updatedAt));
   const inProgress = [9, 10, 11, 0, 1, 2, 3].includes(new Date(stats.updatedAt).getUTCMonth());
+  const track = inProgress ? await getTrack(env.VINEXT_KV_CACHE, stats) : [];
 
   return (
     <main className="lab">
@@ -51,7 +55,9 @@ export default async function ModelPage() {
 
       <ModelLab stored={projection} wemby={stats.wemby} horford={stats.horford} asOf={stats.updatedAt} />
 
-      <Backtest lines={backtestLines()} notes={backtestNotes()} n={inProgress ? "06" : "05"} />
+      {track.length > 0 && <GameTracker n="06" track={track} />}
+
+      <Backtest lines={backtestLines()} notes={backtestNotes()} n={track.length > 0 ? "07" : inProgress ? "06" : "05"} />
 
       <footer className="shell">
         <p>THE WIN SHARE INDEX</p>

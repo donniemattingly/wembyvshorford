@@ -1,25 +1,21 @@
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import './globals.css'
-
-const inter = Inter({ subsets: ['latin'] })
+import type { Metadata } from "next";
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: 'Wemby vs Horford',
-  description: 'Who has the most career win shares?',
+  metadataBase: new URL("https://wembyvshorford.com"),
+  title: "The Win Share Index — Victor Wembanyama vs. Al Horford",
+  description: "A live career win shares ledger tracking Victor Wembanyama against Al Horford.",
   openGraph: {
-    images: 'https://wembyvshorford.vercel.app/api/og'
-  }
-}
+    title: "Has Victor Wembanyama caught Al Horford? Not yet.",
+    description: "The live career win shares ledger.",
+    images: "/og.png",
+  },
+};
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body>{children}</body>
     </html>
-  )
+  );
 }

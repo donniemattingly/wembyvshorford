@@ -1,18 +1,44 @@
 import CareerCharts from "@/components/CareerCharts";
 import ScrollFilm from "@/components/ScrollFilm";
+import ModelProjection, { type BacktestLine } from "@/components/ModelProjection";
 import SeasonProgress from "@/components/SeasonProgress";
+import backtest from "@/lib/model/backtest.json";
+import { type StoredProjection, projectCrossover } from "@/lib/model/crossover";
+import projectionData from "@/lib/model/projection.json";
 import { seasonInProgress, getCareerStats, horfordUrl, wembyUrl } from "@/lib/stats.server";
 
 export const dynamic = "force-dynamic";
 
-const GAMES_PER_SEASON = 82;
-
 const format = (value: number) => value.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-const seasonSpan = (startYear: number) => `${startYear}–${String(startYear + 1).slice(-2)}`;
 
-// Games needed to close the gap at a win-shares-per-game rate, or null if that rate never gets there.
-const gamesToCatch = (gap: number, winShares: number, games: number | undefined) =>
-  games && winShares > 0 ? gap / (winShares / games) : null;
+const backtestLines = (): BacktestLine[] => {
+  const line = (label: string, detail: string, group: typeof backtest.stars): BacktestLine => ({
+    label,
+    detail,
+    cases: group.rest.model.n,
+    miss: group.rest.model.mae,
+    lean: group.rest.model.bias,
+    hit: group.rest.model.coverage ?? null,
+  });
+  return [
+    line("EARLY STARS", ".150+ WS/48 in his third season, age 24 or under", backtest.stars),
+    line("ELITE YOUNG PLAYERS", ".190+ WS/48 or +6 BPM, age 23 or under", backtest.elite),
+    line("ALL-TIME GREATS", "the 60 best careers since 1965, picked knowing how they ended", backtest.greats),
+  ];
+};
+
+const projection = projectionData as StoredProjection;
+
+const backtestNotes = () => {
+  const pct = (v: number) => `${Math.round(v * 100)}%`;
+  const elite100 = backtest.tails.elite[2];
+  const stars = backtest.stars.next5;
+  return [
+    `Its odds hold up. Elite young players were given a ${pct(elite100.predicted)} chance, on average, of 100 or more further Win Shares, and ${pct(elite100.actual)} got there.`,
+    `Over the next five seasons it missed early stars by ${stars.model.mae.toFixed(1)} Win Shares on average. Repeating the last season, the method this page used before, missed by ${stars.repeat.mae.toFixed(1)} and ran ${stars.repeat.bias.toFixed(1)} high.`,
+    `The greats run low because they were picked knowing how their careers went. Malone, Stockton and Nash looked ordinary after three seasons, and no one could have projected what came next.`,
+  ];
+};
 
 export default async function Home() {
   const stats = await getCareerStats();
@@ -22,27 +48,14 @@ export default async function Home() {
   const share = Math.min((wemby.winShares / horford.winShares) * 100, 100);
   const caught = wemby.winShares >= horford.winShares;
 
-  // "Last season" means the last finished one, not the season in progress.
   const season = seasonInProgress(new Date(stats.updatedAt));
   const thisSeason = wemby.seasons.find((s) => s.season === season);
-  const lastSeason = wemby.seasons.filter((s) => s.season !== season).at(-1);
-  const lastSeasonWs = lastSeason?.winShares ?? 0;
-  // Count seasons from the one after the last finished season. If that season is already under way, its
-  // partial total is replaced by a full repeat rather than added on top of one.
-  const wembyBeforeNext = wemby.winShares - (thisSeason?.winShares ?? 0);
-  const seasonsToGo =
-    lastSeasonWs > 0 ? Math.max(Math.ceil((horford.winShares - wembyBeforeNext) / lastSeasonWs), 1) : Infinity;
-  const lastStart = Number.parseInt(lastSeason?.season.slice(0, 4) ?? "", 10);
-  const crossover = Number.isFinite(seasonsToGo) && Number.isFinite(lastStart) ? seasonSpan(lastStart + seasonsToGo) : "—";
-  const lastLabel = Number.isFinite(lastStart) ? seasonSpan(lastStart) : "LAST SEASON";
+  const model = projectCrossover(projection, wemby, horford, new Date(stats.updatedAt));
 
   // Horford's finished seasons, and the career season he is in (or about to start).
   const horfordInSeason = horford.seasons.some((s) => s.season === season);
   const horfordDone = horford.seasons.length - (horfordInSeason ? 1 : 0);
   const wembyDone = wemby.seasons.length - (thisSeason ? 1 : 0);
-
-  const careerPace = gamesToCatch(gap, wemby.winShares, wemby.games);
-  const seasonPace = thisSeason ? gamesToCatch(gap, thisSeason.winShares, thisSeason.games) : null;
 
   const updated = new Intl.DateTimeFormat("en-US", {
     month: "short",
@@ -174,51 +187,14 @@ export default async function Home() {
         <CareerCharts wemby={wemby} horford={horford} />
       </section>
 
-      <section className="projection shell" aria-labelledby="projection-heading">
-        <div className="section-label inverse">
-          <span>{n(3)}</span>
-          <h2 id="projection-heading">PROJECTION</h2>
-          <p>HORFORD HELD AT HIS CURRENT TOTAL</p>
-        </div>
-        <div className="projection-grid">
-          <p className="kicker">{caught ? "THE CHASE IS OVER" : `IF WEMBY REPEATS ${lastLabel}`}</p>
-          <p className="big-number">{caught ? "NOW" : crossover}</p>
-          <p className="big-label">
-            CROSSOVER
-            <br />
-            SEASON
-          </p>
-          {caught ? (
-            <p className="projection-copy">
-              Wembanyama has <strong>{format(wemby.winShares)} career Win Shares</strong> to Horford&apos;s{" "}
-              {format(horford.winShares)}. He has passed Horford.
-            </p>
-          ) : (
-            <p className="projection-copy">
-              Wembanyama produced <strong>{format(lastSeasonWs)} Win Shares in {lastLabel}.</strong> At that rate, with
-              Horford held at {format(horford.winShares)}, he passes Horford during {crossover}.
-            </p>
-          )}
-        </div>
-        {!caught && (careerPace != null || seasonPace != null) && (
-          <div className="pace-grid">
-            {seasonPace != null && (
-              <div>
-                <span>AT THIS SEASON&apos;S PACE</span>
-                <strong>{Math.ceil(seasonPace).toLocaleString("en-US")}</strong>
-                <p>more games, about {format(seasonPace / GAMES_PER_SEASON)} full seasons.</p>
-              </div>
-            )}
-            {careerPace != null && (
-              <div>
-                <span>AT HIS CAREER PACE</span>
-                <strong>{Math.ceil(careerPace).toLocaleString("en-US")}</strong>
-                <p>more games, about {format(careerPace / GAMES_PER_SEASON)} full seasons.</p>
-              </div>
-            )}
-          </div>
-        )}
-      </section>
+      <ModelProjection
+        label={n(3)}
+        model={model}
+        caught={caught}
+        horfordNow={horford.winShares}
+        backtest={backtestLines()}
+        notes={backtestNotes()}
+      />
 
       <section className="notes shell">
         <div className="section-label">
@@ -236,10 +212,10 @@ export default async function Home() {
             <p>Career and season totals from Basketball Reference, refreshed once a day.</p>
           </div>
           <div>
-            <span>THE PACE FIGURES</span>
+            <span>THE PROJECTION</span>
             <p>
-              Games needed at Wembanyama&apos;s Win Shares per game, this season and for his career, with Horford held
-              where he is. Early-season figures move a lot.
+              Comparables are rebuilt after each season from every player&apos;s season totals. This season&apos;s games
+              move the projection every day.
             </p>
           </div>
         </div>

@@ -1,0 +1,803 @@
+{
+ "params": {
+  "recency": [
+   8,
+   3,
+   1
+  ],
+  "rateScale": 0.025,
+  "bpmScale": 1.5,
+  "minutesScale": 700,
+  "lastScale": 4,
+  "careerScale": 1000,
+  "pickScale": 1000,
+  "heightScale": 1000,
+  "pickEffect": 0.06,
+  "heightEffect": 0.04,
+  "agePenalty": 1000,
+  "missingPenalty": 8,
+  "comps": 60,
+  "bandwidth": 0.5,
+  "minEffective": 15,
+  "blendNear": 0,
+  "blendFar": 1,
+  "scaling": 1,
+  "scaleOnRate": 0,
+  "rateShrinkMinutes": 800,
+  "inSeasonPriorMinutes": 1200,
+  "noise": 0.4
+ },
+ "greats": {
+  "cases": 180,
+  "next1": {
+   "model": {
+    "n": 180,
+    "mae": 3.090172884953412,
+    "bias": -1.7555684133984388
+   },
+   "repeat": {
+    "n": 180,
+    "mae": 2.933706933806936,
+    "bias": -1.0215733932733935
+   },
+   "curve": {
+    "n": 180,
+    "mae": 3.1069177200773725,
+    "bias": -1.79702863822687
+   }
+  },
+  "next5": {
+   "model": {
+    "n": 180,
+    "mae": 18.565807347707803,
+    "bias": -15.753756042616818,
+    "coverage": 0.6333333333333333
+   },
+   "repeat": {
+    "n": 180,
+    "mae": 15.957936327252995,
+    "bias": -8.460595649412316
+   },
+   "curve": {
+    "n": 180,
+    "mae": 18.956643483346046,
+    "bias": -16.908851957443915
+   }
+  },
+  "rest": {
+   "model": {
+    "n": 134,
+    "mae": 56.49409031180562,
+    "bias": -52.788575942263186,
+    "coverage": 0.5223880597014925
+   },
+   "curve": {
+    "n": 134,
+    "mae": 59.35226644957285,
+    "bias": -58.361308989802474
+   }
+  }
+ },
+ "stars": {
+  "cases": 141,
+  "next1": {
+   "model": {
+    "n": 138,
+    "mae": 2.3733086928998297,
+    "bias": 0.16934221399408722
+   },
+   "repeat": {
+    "n": 138,
+    "mae": 2.678325281803542,
+    "bias": 1.2848689796515884
+   },
+   "curve": {
+    "n": 138,
+    "mae": 2.3457479658269818,
+    "bias": 0.1251479684146377
+   }
+  },
+  "next5": {
+   "model": {
+    "n": 129,
+    "mae": 12.794486266930937,
+    "bias": 0.1636693928877198,
+    "coverage": 0.8294573643410853
+   },
+   "repeat": {
+    "n": 129,
+    "mae": 16.505613667125296,
+    "bias": 10.575991129456241
+   },
+   "curve": {
+    "n": 129,
+    "mae": 12.254317861383575,
+    "bias": -0.17617076671871842
+   }
+  },
+  "rest": {
+   "model": {
+    "n": 84,
+    "mae": 32.09139542739415,
+    "bias": -2.531937802187483,
+    "coverage": 0.7261904761904762
+   },
+   "curve": {
+    "n": 84,
+    "mae": 32.0966713936936,
+    "bias": -4.224057861390974
+   }
+  }
+ },
+ "elite": {
+  "cases": 84,
+  "next1": {
+   "model": {
+    "n": 80,
+    "mae": 2.984134640983906,
+    "bias": 0.32912795959001445
+   },
+   "repeat": {
+    "n": 80,
+    "mae": 2.9990016053391058,
+    "bias": 1.3293722763347764
+   },
+   "curve": {
+    "n": 80,
+    "mae": 2.955581089834754,
+    "bias": 0.2721797690262876
+   }
+  },
+  "next5": {
+   "model": {
+    "n": 70,
+    "mae": 14.126879276285353,
+    "bias": 0.3407174072699507,
+    "coverage": 0.7571428571428571
+   },
+   "repeat": {
+    "n": 70,
+    "mae": 15.127012328940898,
+    "bias": 8.665485633414207
+   },
+   "curve": {
+    "n": 70,
+    "mae": 13.569314293365801,
+    "bias": -1.1367208136209137
+   }
+  },
+  "rest": {
+   "model": {
+    "n": 36,
+    "mae": 42.47717778227871,
+    "bias": 4.868931734772153,
+    "coverage": 0.75
+   },
+   "curve": {
+    "n": 36,
+    "mae": 42.477744118470895,
+    "bias": -3.79353998297249
+   }
+  }
+ },
+ "heldOut": {
+  "cases": 496,
+  "next1": {
+   "model": {
+    "n": 496,
+    "mae": 2.179822088856519,
+    "bias": 0.014524966216686233
+   },
+   "repeat": {
+    "n": 496,
+    "mae": 2.262591062573926,
+    "bias": 0.4741312942458777
+   },
+   "curve": {
+    "n": 496,
+    "mae": 2.1791354369380116,
+    "bias": -0.04295594058261322
+   }
+  },
+  "next5": {
+   "model": {
+    "n": 496,
+    "mae": 10.41512727834298,
+    "bias": 0.364134614773119,
+    "coverage": 0.8326612903225806
+   },
+   "repeat": {
+    "n": 496,
+    "mae": 12.262791610060093,
+    "bias": 5.936218768549754
+   },
+   "curve": {
+    "n": 496,
+    "mae": 10.399621848995373,
+    "bias": 0.4534366625265024
+   }
+  },
+  "rest": {
+   "model": {
+    "n": 394,
+    "mae": 23.04482570722178,
+    "bias": -0.17210053731078134,
+    "coverage": 0.8020304568527918
+   },
+   "curve": {
+    "n": 394,
+    "mae": 23.06368118154225,
+    "bias": 0.13950023430980898
+   }
+  }
+ },
+ "strict": {
+  "cases": 89,
+  "next1": {
+   "model": {
+    "n": 89,
+    "mae": 2.9507627091859447,
+    "bias": -1.2566808022106446
+   },
+   "repeat": {
+    "n": 89,
+    "mae": 3.0217362387924203,
+    "bias": -0.7873914425150376
+   },
+   "curve": {
+    "n": 89,
+    "mae": 2.9704874517515107,
+    "bias": -1.3085997570528556
+   }
+  },
+  "next5": {
+   "model": {
+    "n": 89,
+    "mae": 16.43687027976815,
+    "bias": -14.505534050862842,
+    "coverage": 0.7078651685393258
+   },
+   "repeat": {
+    "n": 89,
+    "mae": 15.579613551242772,
+    "bias": -9.836091817046874
+   },
+   "curve": {
+    "n": 89,
+    "mae": 17.30285681234262,
+    "bias": -15.667476444841709
+   }
+  },
+  "rest": {
+   "model": {
+    "n": 43,
+    "mae": 65.53984026782868,
+    "bias": -65.53984026782868,
+    "coverage": 0.4883720930232558
+   },
+   "curve": {
+    "n": 43,
+    "mae": 62.61161779871204,
+    "bias": -62.61161779871204
+   }
+  }
+ },
+ "tails": {
+  "stars": [
+   {
+    "threshold": 40,
+    "predicted": 0.7161309523809525,
+    "actual": 0.7380952380952381
+   },
+   {
+    "threshold": 70,
+    "predicted": 0.4318928571428571,
+    "actual": 0.44047619047619047
+   },
+   {
+    "threshold": 100,
+    "predicted": 0.2494642857142857,
+    "actual": 0.23809523809523808
+   }
+  ],
+  "elite": [
+   {
+    "threshold": 40,
+    "predicted": 0.9318888888888888,
+    "actual": 0.9444444444444444
+   },
+   {
+    "threshold": 70,
+    "predicted": 0.7271111111111109,
+    "actual": 0.6388888888888888
+   },
+   {
+    "threshold": 100,
+    "predicted": 0.5261944444444444,
+    "actual": 0.5277777777777778
+   }
+  ]
+ },
+ "examples": [
+  {
+   "name": "LeBron James",
+   "year": 2006,
+   "projected": 187,
+   "low": 99,
+   "high": 329,
+   "actual": 247
+  },
+  {
+   "name": "Kareem Abdul-Jabbar",
+   "year": 1972,
+   "projected": 222,
+   "low": 109,
+   "high": 300,
+   "actual": 212
+  },
+  {
+   "name": "Karl Malone",
+   "year": 1988,
+   "projected": 61,
+   "low": 25,
+   "high": 109,
+   "actual": 222
+  },
+  {
+   "name": "Chris Paul",
+   "year": 2008,
+   "projected": 142,
+   "low": 71,
+   "high": 216,
+   "actual": null
+  },
+  {
+   "name": "Michael Jordan",
+   "year": 1987,
+   "projected": 117,
+   "low": 40,
+   "high": 179,
+   "actual": 182
+  },
+  {
+   "name": "John Stockton",
+   "year": 1987,
+   "projected": 37,
+   "low": 12,
+   "high": 69,
+   "actual": 196
+  },
+  {
+   "name": "Dirk Nowitzki",
+   "year": 2001,
+   "projected": 109,
+   "low": 56,
+   "high": 170,
+   "actual": 185
+  },
+  {
+   "name": "Tim Duncan",
+   "year": 2000,
+   "projected": 134,
+   "low": 51,
+   "high": 209,
+   "actual": 173
+  },
+  {
+   "name": "Kevin Garnett",
+   "year": 1998,
+   "projected": 105,
+   "low": 52,
+   "high": 186,
+   "actual": 175
+  },
+  {
+   "name": "Artis Gilmore",
+   "year": 1974,
+   "projected": 86,
+   "low": 28,
+   "high": 155,
+   "actual": 138
+  },
+  {
+   "name": "Kevin Durant",
+   "year": 2010,
+   "projected": 159,
+   "low": 70,
+   "high": 262,
+   "actual": null
+  },
+  {
+   "name": "James Harden",
+   "year": 2012,
+   "projected": 88,
+   "low": 46,
+   "high": 148,
+   "actual": null
+  },
+  {
+   "name": "Shaquille O'Neal",
+   "year": 1995,
+   "projected": 170,
+   "low": 79,
+   "high": 289,
+   "actual": 146
+  },
+  {
+   "name": "Julius Erving",
+   "year": 1974,
+   "projected": 122,
+   "low": 45,
+   "high": 195,
+   "actual": 141
+  },
+  {
+   "name": "Moses Malone",
+   "year": 1977,
+   "projected": 87,
+   "low": 31,
+   "high": 170,
+   "actual": 158
+  },
+  {
+   "name": "David Robinson",
+   "year": 1992,
+   "projected": 131,
+   "low": 75,
+   "high": 181,
+   "actual": 138
+  },
+  {
+   "name": "Charles Barkley",
+   "year": 1987,
+   "projected": 92,
+   "low": 47,
+   "high": 145,
+   "actual": 151
+  },
+  {
+   "name": "Reggie Miller",
+   "year": 1990,
+   "projected": 66,
+   "low": 25,
+   "high": 113,
+   "actual": 156
+  },
+  {
+   "name": "Kobe Bryant",
+   "year": 1999,
+   "projected": 92,
+   "low": 53,
+   "high": 157,
+   "actual": 161
+  },
+  {
+   "name": "Hakeem Olajuwon",
+   "year": 1987,
+   "projected": 83,
+   "low": 15,
+   "high": 157,
+   "actual": 136
+  },
+  {
+   "name": "Dan Issel",
+   "year": 1973,
+   "projected": 87,
+   "low": 34,
+   "high": 138,
+   "actual": 117
+  },
+  {
+   "name": "Magic Johnson",
+   "year": 1982,
+   "projected": 121,
+   "low": 55,
+   "high": 211,
+   "actual": 126
+  },
+  {
+   "name": "Paul Pierce",
+   "year": 2001,
+   "projected": 69,
+   "low": 34,
+   "high": 115,
+   "actual": 128
+  },
+  {
+   "name": "Stephen Curry",
+   "year": 2012,
+   "projected": 38,
+   "low": 9,
+   "high": 79,
+   "actual": null
+  },
+  {
+   "name": "Robert Parish",
+   "year": 1979,
+   "projected": 45,
+   "low": 12,
+   "high": 89,
+   "actual": 131
+  },
+  {
+   "name": "Larry Bird",
+   "year": 1982,
+   "projected": 85,
+   "low": 30,
+   "high": 134,
+   "actual": 111
+  },
+  {
+   "name": "Gary Payton",
+   "year": 1993,
+   "projected": 47,
+   "low": 15,
+   "high": 94,
+   "actual": 135
+  },
+  {
+   "name": "Ray Allen",
+   "year": 1999,
+   "projected": 57,
+   "low": 15,
+   "high": 98,
+   "actual": 129
+  },
+  {
+   "name": "Pau Gasol",
+   "year": 2004,
+   "projected": 58,
+   "low": 21,
+   "high": 108,
+   "actual": 122
+  },
+  {
+   "name": "Nikola Jokić",
+   "year": 2018,
+   "projected": 91,
+   "low": 45,
+   "high": 145,
+   "actual": null
+  },
+  {
+   "name": "Dwight Howard",
+   "year": 2007,
+   "projected": 119,
+   "low": 55,
+   "high": 211,
+   "actual": null
+  },
+  {
+   "name": "Jason Kidd",
+   "year": 1997,
+   "projected": 40,
+   "low": 9,
+   "high": 83,
+   "actual": 132
+  },
+  {
+   "name": "Clyde Drexler",
+   "year": 1986,
+   "projected": 48,
+   "low": 17,
+   "high": 89,
+   "actual": 119
+  },
+  {
+   "name": "Adrian Dantley",
+   "year": 1979,
+   "projected": 54,
+   "low": 16,
+   "high": 93,
+   "actual": 107
+  },
+  {
+   "name": "Steve Nash",
+   "year": 1999,
+   "projected": 13,
+   "low": 0,
+   "high": 29,
+   "actual": 125
+  },
+  {
+   "name": "Jimmy Butler",
+   "year": 2014,
+   "projected": 43,
+   "low": 13,
+   "high": 74,
+   "actual": null
+  },
+  {
+   "name": "Rick Barry",
+   "year": 1969,
+   "projected": 56,
+   "low": 22,
+   "high": 118,
+   "actual": 95
+  },
+  {
+   "name": "Giannis Antetokounmpo",
+   "year": 2016,
+   "projected": 81,
+   "low": 37,
+   "high": 151,
+   "actual": null
+  },
+  {
+   "name": "Patrick Ewing",
+   "year": 1988,
+   "projected": 41,
+   "low": 14,
+   "high": 75,
+   "actual": 114
+  },
+  {
+   "name": "Vince Carter",
+   "year": 2001,
+   "projected": 82,
+   "low": 23,
+   "high": 145,
+   "actual": 96
+  },
+  {
+   "name": "Rudy Gobert",
+   "year": 2016,
+   "projected": 49,
+   "low": 17,
+   "high": 90,
+   "actual": null
+  },
+  {
+   "name": "Scottie Pippen",
+   "year": 1990,
+   "projected": 37,
+   "low": 10,
+   "high": 68,
+   "actual": 116
+  },
+  {
+   "name": "Shawn Marion",
+   "year": 2002,
+   "projected": 71,
+   "low": 34,
+   "high": 116,
+   "actual": 100
+  },
+  {
+   "name": "Elvin Hayes",
+   "year": 1971,
+   "projected": 51,
+   "low": 13,
+   "high": 97,
+   "actual": 95
+  },
+  {
+   "name": "Chauncey Billups",
+   "year": 2000,
+   "projected": 13,
+   "low": 0,
+   "high": 35,
+   "actual": 116
+  },
+  {
+   "name": "Dwyane Wade",
+   "year": 2006,
+   "projected": 84,
+   "low": 31,
+   "high": 145,
+   "actual": 93
+  },
+  {
+   "name": "Anthony Davis",
+   "year": 2015,
+   "projected": 175,
+   "low": 82,
+   "high": 299,
+   "actual": null
+  },
+  {
+   "name": "Buck Williams",
+   "year": 1984,
+   "projected": 61,
+   "low": 17,
+   "high": 103,
+   "actual": 93
+  },
+  {
+   "name": "Al Horford",
+   "year": 2010,
+   "projected": 68,
+   "low": 27,
+   "high": 115,
+   "actual": null
+  },
+  {
+   "name": "Damian Lillard",
+   "year": 2015,
+   "projected": 65,
+   "low": 22,
+   "high": 114,
+   "actual": null
+  },
+  {
+   "name": "Horace Grant",
+   "year": 1990,
+   "projected": 54,
+   "low": 18,
+   "high": 93,
+   "actual": 102
+  },
+  {
+   "name": "Dominique Wilkins",
+   "year": 1985,
+   "projected": 43,
+   "low": 15,
+   "high": 78,
+   "actual": 97
+  },
+  {
+   "name": "Bob Lanier",
+   "year": 1973,
+   "projected": 74,
+   "low": 24,
+   "high": 137,
+   "actual": 93
+  },
+  {
+   "name": "George Gervin",
+   "year": 1975,
+   "projected": 70,
+   "low": 29,
+   "high": 116,
+   "actual": 97
+  },
+  {
+   "name": "LaMarcus Aldridge",
+   "year": 2009,
+   "projected": 63,
+   "low": 16,
+   "high": 113,
+   "actual": null
+  },
+  {
+   "name": "DeMar DeRozan",
+   "year": 2012,
+   "projected": 41,
+   "low": 5,
+   "high": 74,
+   "actual": null
+  },
+  {
+   "name": "Walt Frazier",
+   "year": 1970,
+   "projected": 90,
+   "low": 38,
+   "high": 141,
+   "actual": 82
+  },
+  {
+   "name": "Kevin McHale",
+   "year": 1983,
+   "projected": 45,
+   "low": 17,
+   "high": 78,
+   "actual": 93
+  },
+  {
+   "name": "Russell Westbrook",
+   "year": 2011,
+   "projected": 72,
+   "low": 24,
+   "high": 117,
+   "actual": null
+  },
+  {
+   "name": "Jack Sikma",
+   "year": 1980,
+   "projected": 64,
+   "low": 22,
+   "high": 111,
+   "actual": 90
+  }
+ ]
+}

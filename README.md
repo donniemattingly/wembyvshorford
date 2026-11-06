@@ -9,6 +9,24 @@ The site is a [vinext](https://github.com/cloudflare/vinext) App Router app runn
 - `worker/index.ts` is the Worker entry: it redirects `www`, hands requests to vinext, and runs the daily scrape on the cron trigger (10:15 UTC).
 - `public/` holds the highlight film, OG image and other static assets.
 
+## Projection model
+
+The crossover forecast comes from a comparable-player model in `lib/model/`.
+
+- `history.json` has every NBA and ABA player season since 1960 from Basketball Reference (via [sumitrodatta/bball-reference-datasets](https://github.com/sumitrodatta/bball-reference-datasets)): games, minutes, Win Shares, box plus/minus, plus draft slot and height. Built by `scripts/build-history.mjs`.
+- `winShares.ts` finds the players who looked most like a player at the same age, follows what they did next, scales that by how much better or worse he is than each of them, and blends it with a plain aging curve.
+- `scripts/backtest.ts` tests the model on past players and tunes its settings (`--tune`). Results go to `backtest.json`.
+- `scripts/project.ts` runs the model for Wembanyama and Horford after the last complete season and writes `projection.json`.
+- `crossover.ts` runs on each page load: it folds in this season's games and simulates both careers 4,000 times.
+
+After each season, download the latest CSVs and rebuild:
+
+```sh
+node scripts/build-history.mjs Advanced.csv "Team Summaries.csv" "Draft Pick History.csv" "Player Career Info.csv"
+node scripts/backtest.ts --tune
+node scripts/project.ts
+```
+
 ## Develop
 
 ```sh

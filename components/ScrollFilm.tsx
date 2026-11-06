@@ -58,22 +58,15 @@ export default function ScrollFilm({ gap, label }: { gap: string; label: string 
         </video>
         <div className="film-wash" />
         <div className="film-meta">
-          <span>{label} / THE TAPE</span>
+          <span>{label} / HIGHLIGHTS</span>
           <span>SCROLL TO PLAY</span>
         </div>
         <h2 id="film-heading">
           WATCH
           <br />
-          THE
-          <br />
-          CEILING
+          WEMBY
         </h2>
         <div className="film-caption">
-          <p>
-            Arguably the best player on the planet.
-            <br />
-            The Win Share ledger remains unimpressed.
-          </p>
           <span>{gap} WS BEHIND</span>
         </div>
         <div className="film-progress" aria-hidden="true">

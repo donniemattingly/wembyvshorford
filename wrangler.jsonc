@@ -1,0 +1,27 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Production Worker serving wembyvshorford.com.
+  "name": "winshares",
+  "main": "./worker/index.ts",
+  "compatibility_date": "2026-07-14",
+  "compatibility_flags": ["nodejs_compat"],
+  "routes": [
+    { "pattern": "wembyvshorford.com", "custom_domain": true }
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "logs": { "enabled": true, "head_sampling_rate": 1, "persist": true, "invocation_logs": true }
+  },
+  "assets": {
+    "binding": "ASSETS"
+  },
+  // Holds the scraped career stats (key career-stats:v3) and vinext's data cache.
+  "kv_namespaces": [
+    { "binding": "VINEXT_KV_CACHE", "id": "9b63c3688a664f28bfba6caab240ce5f" }
+  ],
+  // Refresh stats from Basketball Reference daily at 10:15 UTC.
+  "triggers": {
+    "crons": ["15 10 * * *"]
+  }
+}

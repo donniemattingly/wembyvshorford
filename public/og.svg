@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0a0a09"/>
+  <circle cx="1030" cy="160" r="260" fill="none" stroke="#f1eee5" stroke-opacity=".08" stroke-width="70"/>
+  <rect x="58" y="52" width="44" height="44" fill="#d7ff2f"/>
+  <text x="80" y="80" fill="#0a0a09" font-family="Arial, sans-serif" font-weight="900" font-size="15" text-anchor="middle">WS</text>
+  <text x="118" y="82" fill="#f1eee5" font-family="Arial, sans-serif" font-weight="900" font-size="20" letter-spacing="1">THE WIN SHARE INDEX</text>
+  <text x="1142" y="82" fill="#f1eee5" font-family="Arial, sans-serif" font-weight="700" font-size="14" text-anchor="end" letter-spacing="3">CAREER LEDGER · NBA</text>
+  <text x="60" y="185" fill="#d7ff2f" font-family="Arial, sans-serif" font-weight="900" font-size="18" letter-spacing="3">HAS VICTOR WEMBANYAMA CAUGHT AL HORFORD?</text>
+  <text x="52" y="335" fill="#f1eee5" font-family="Impact, Arial Black, sans-serif" font-weight="900" font-size="150" letter-spacing="-4">NOT YET.</text>
+  <g transform="translate(895 210) rotate(-4)">
+    <rect width="245" height="105" fill="#f24b35" stroke="#f1eee5" stroke-width="3"/>
+    <text x="122" y="47" fill="#0a0a09" font-family="Impact, Arial Black, sans-serif" font-size="33" text-anchor="middle">101.9</text>
+    <text x="122" y="78" fill="#0a0a09" font-family="Arial, sans-serif" font-size="13" font-weight="900" letter-spacing="2" text-anchor="middle">WIN SHARES TO GO</text>
+  </g>
+  <line x1="60" x2="1140" y1="408" y2="408" stroke="#f1eee5" stroke-width="3"/>
+  <text x="60" y="458" fill="#f1eee5" font-family="Arial, sans-serif" font-size="18" font-weight="800" letter-spacing="2">WEMBANYAMA</text>
+  <text x="60" y="555" fill="#d7ff2f" font-family="Impact, Arial Black, sans-serif" font-size="100">17.5</text>
+  <text x="420" y="458" fill="#f1eee5" font-family="Arial, sans-serif" font-size="18" font-weight="800" letter-spacing="2">HORFORD</text>
+  <text x="420" y="555" fill="#f1eee5" font-family="Impact, Arial Black, sans-serif" font-size="100">119.4</text>
+  <rect x="790" y="472" width="350" height="24" fill="#f1eee5"/>
+  <rect x="790" y="472" width="51" height="24" fill="#f24b35"/>
+  <text x="1140" y="535" fill="#f1eee5" font-family="Arial, sans-serif" font-size="14" font-weight="800" letter-spacing="2" text-anchor="end">UPDATED DAILY ON CLOUDFLARE</text>
+</svg>

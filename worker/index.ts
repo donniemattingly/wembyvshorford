@@ -1,4 +1,5 @@
 import handler from "vinext/server/fetch-handler";
+import { serveCard } from "@/lib/og/render";
 import { STATS_KEY, refreshIfNeeded, scrapeCareerStats } from "@/lib/stats.server";
 
 export default {
@@ -9,6 +10,9 @@ export default {
         url.protocol = "https:";
         url.hostname = "wembyvshorford.com";
         return Response.redirect(url, 308);
+      }
+      if (url.pathname === "/og.png" && (request.method === "GET" || request.method === "HEAD")) {
+        return await serveCard(request, env, ctx);
       }
       if (request.method === "GET" && url.pathname === "/") ctx.waitUntil(refreshIfNeeded(env.VINEXT_KV_CACHE));
       return await handler.fetch(request, env, ctx);

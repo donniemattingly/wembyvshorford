@@ -7,7 +7,8 @@ The site is a [vinext](https://github.com/cloudflare/vinext) App Router app runn
 - `app/page.tsx` renders the page from the stats stored in KV.
 - `lib/stats.server.ts` scrapes Basketball Reference and reads/writes the `career-stats:v3` KV key.
 - `worker/index.ts` is the Worker entry: it redirects `www`, hands requests to vinext, and runs the daily scrape on the cron trigger (10:15 UTC).
-- `public/` holds the highlight film, OG image and other static assets.
+- `public/` holds the highlight film, the share-card fonts and other static assets.
+- `lib/og/` draws the share card (`/og.png`) from the live numbers with resvg. Pages link it as `/og.png?v=<wemby>-<horford>`, so the URL changes whenever the numbers do and link previews (Discord, Slack, iMessage) fetch a fresh image.
 
 ## Projection model
 

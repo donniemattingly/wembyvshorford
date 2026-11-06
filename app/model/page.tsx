@@ -4,14 +4,24 @@ import ModelLab from "@/components/model/ModelLab";
 import { backtestLines, backtestNotes } from "@/lib/model/backtestSummary";
 import type { StoredProjection } from "@/lib/model/crossover";
 import projectionData from "@/lib/model/projection.json";
+import { cardPath } from "@/lib/og/card";
 import { getCareerStats } from "@/lib/stats.server";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "The Model — When does Wembanyama pass Horford?",
-  description: "How the crossover projection works: comparable players, this season's games and 4,000 simulated careers.",
-};
+const title = "The Model — When does Wembanyama pass Horford?";
+const description = "How the crossover projection works: comparable players, this season's games and 4,000 simulated careers.";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { wemby, horford } = await getCareerStats();
+  const image = cardPath({ wemby: wemby.winShares, horford: horford.winShares });
+  return {
+    title,
+    description,
+    openGraph: { title, description, url: "/model", images: [{ url: image, width: 1200, height: 630 }] },
+    twitter: { card: "summary_large_image", title, description, images: [image] },
+  };
+}
 
 const projection = projectionData as StoredProjection;
 

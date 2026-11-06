@@ -8,7 +8,9 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Has Victor Wembanyama caught Al Horford? Not yet.",
     description: "The live career win shares ledger.",
-    images: "/og.png",
+    url: "/",
+    siteName: "The Win Share Index",
+    type: "website",
   },
 };
 

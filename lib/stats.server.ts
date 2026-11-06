@@ -12,6 +12,8 @@ export type Season = {
   // Older snapshots in KV only stored win shares per season.
   games?: number;
   winSharesPer48?: number | null;
+  minutes?: number | null;
+  bpm?: number | null;
 };
 
 export type Player = {
@@ -102,6 +104,8 @@ const parsePlayer = (html: string): Player => {
         winShares: readStat(row, "ws"),
         games: readOptionalStat(row, "games") ?? undefined,
         winSharesPer48: readOptionalStat(row, "ws_per_48"),
+        minutes: readOptionalStat(row, "mp"),
+        bpm: readOptionalStat(row, "bpm"),
       };
     },
   );

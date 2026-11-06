@@ -1029,6 +1029,137 @@ footer p:last-child {
     text-align: left;
   }
 }
+/* Model projection */
+.model-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+.odds {
+  border-bottom: 1px solid #f1eee559;
+  padding: 26px 0 30px;
+}
+.odds-title,
+.model-notes span {
+  color: var(--volt);
+  letter-spacing: 0.18em;
+  font-size: 10px;
+  font-weight: 900;
+}
+.odds ol {
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.odds li {
+  grid-template-columns: 74px 1fr 48px;
+  align-items: center;
+  gap: 14px;
+  padding: 5px 0;
+  display: grid;
+  font: 700 13px/1 Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.odds i {
+  background: #f1eee51f;
+  height: 14px;
+  display: block;
+}
+.odds b {
+  background: var(--volt);
+  height: 100%;
+  display: block;
+}
+.odds em {
+  text-align: right;
+  font-style: normal;
+}
+.model-notes {
+  grid-template-columns: 1fr 1fr;
+  display: grid;
+}
+.model-notes > div {
+  padding: 26px 30px 0 0;
+}
+.model-notes > div + div {
+  border-left: 1px solid #f1eee559;
+  padding-left: 30px;
+}
+.model-notes p {
+  margin: 14px 0 0;
+  font:
+    16px/1.5 Georgia,
+    serif;
+}
+.model-notes .comps {
+  opacity: 0.75;
+  font-size: 14px;
+}
+.backtest {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.backtest th,
+.backtest td {
+  text-align: right;
+  vertical-align: top;
+  padding: 10px 0 10px 12px;
+}
+.backtest th:first-child {
+  text-align: left;
+  padding-left: 0;
+}
+.backtest thead th {
+  letter-spacing: 0.14em;
+  font-size: 9px;
+  font-weight: 900;
+}
+.backtest tbody tr {
+  border-top: 1px solid #f1eee559;
+}
+.backtest tbody th {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+.backtest small {
+  opacity: 0.7;
+  letter-spacing: 0;
+  margin-top: 4px;
+  font: 400 12px/1.35 Georgia, serif;
+  display: block;
+}
+.backtest td {
+  font: 700 18px/1 Arial, sans-serif;
+}
+@media (max-width: 800px) {
+  .model-grid,
+  .model-notes {
+    grid-template-columns: 1fr;
+  }
+  .model-grid div + div {
+    border-left: 0;
+    border-top: 1px solid #f1eee559;
+    padding-left: 0;
+  }
+  .model-notes > div + div {
+    border-left: 0;
+    border-top: 1px solid #f1eee559;
+    margin-top: 26px;
+    padding-left: 0;
+  }
+  .odds li {
+    grid-template-columns: 64px 1fr 40px;
+    gap: 10px;
+  }
+  .backtest th,
+  .backtest td {
+    padding-left: 8px;
+  }
+  .backtest td {
+    font-size: 15px;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

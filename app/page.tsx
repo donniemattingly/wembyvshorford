@@ -1,8 +1,7 @@
 import CareerCharts from "@/components/CareerCharts";
 import ScrollFilm from "@/components/ScrollFilm";
-import ModelProjection, { type BacktestLine } from "@/components/ModelProjection";
+import ModelProjection from "@/components/ModelProjection";
 import SeasonProgress from "@/components/SeasonProgress";
-import backtest from "@/lib/model/backtest.json";
 import { type StoredProjection, projectCrossover } from "@/lib/model/crossover";
 import projectionData from "@/lib/model/projection.json";
 import { seasonInProgress, getCareerStats, horfordUrl, wembyUrl } from "@/lib/stats.server";
@@ -11,34 +10,7 @@ export const dynamic = "force-dynamic";
 
 const format = (value: number) => value.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
-const backtestLines = (): BacktestLine[] => {
-  const line = (label: string, detail: string, group: typeof backtest.stars): BacktestLine => ({
-    label,
-    detail,
-    cases: group.rest.model.n,
-    miss: group.rest.model.mae,
-    lean: group.rest.model.bias,
-    hit: group.rest.model.coverage ?? null,
-  });
-  return [
-    line("EARLY STARS", ".150+ WS/48 in his third season, age 24 or under", backtest.stars),
-    line("ELITE YOUNG PLAYERS", ".190+ WS/48 or +6 BPM, age 23 or under", backtest.elite),
-    line("ALL-TIME GREATS", "the 60 best careers since 1965, picked knowing how they ended", backtest.greats),
-  ];
-};
-
 const projection = projectionData as StoredProjection;
-
-const backtestNotes = () => {
-  const pct = (v: number) => `${Math.round(v * 100)}%`;
-  const elite100 = backtest.tails.elite[2];
-  const stars = backtest.stars.next5;
-  return [
-    `Its odds hold up. Elite young players were given a ${pct(elite100.predicted)} chance, on average, of 100 or more further Win Shares, and ${pct(elite100.actual)} got there.`,
-    `Over the next five seasons it missed early stars by ${stars.model.mae.toFixed(1)} Win Shares on average. Repeating the last season, the method this page used before, missed by ${stars.repeat.mae.toFixed(1)} and ran ${stars.repeat.bias.toFixed(1)} high.`,
-    `The greats run low because they were picked knowing how their careers went. Malone, Stockton and Nash looked ordinary after three seasons, and no one could have projected what came next.`,
-  ];
-};
 
 export default async function Home() {
   const stats = await getCareerStats();
@@ -187,14 +159,7 @@ export default async function Home() {
         <CareerCharts wemby={wemby} horford={horford} />
       </section>
 
-      <ModelProjection
-        label={n(3)}
-        model={model}
-        caught={caught}
-        horfordNow={horford.winShares}
-        backtest={backtestLines()}
-        notes={backtestNotes()}
-      />
+      <ModelProjection label={n(3)} model={model} caught={caught} />
 
       <section className="notes shell">
         <div className="section-label">

@@ -19,6 +19,8 @@ The crossover forecast comes from a comparable-player model in `lib/model/`.
 - `scripts/project.ts` runs the model for Wembanyama and Horford after the last complete season and writes `projection.json`.
 - `crossover.ts` runs on each page load: it folds in this season's games and simulates both careers 4,000 times.
 
+`/model` (`app/model/page.tsx`, `components/model/`) shows the work: the comparables, the in-season blend, and the 4,000 simulations run in the browser a batch per frame, with what-if controls for Wembanyama's level, season-to-season noise and Horford's retirement. With the default settings it uses the same seed as the home page, so both show the same numbers.
+
 After each season, download the latest CSVs and rebuild:
 
 ```sh

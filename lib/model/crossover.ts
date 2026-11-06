@@ -15,7 +15,7 @@ export type StoredPlayer = {
   nextRate: number;
   paths: number[][];
   weights: number[];
-  comps: { name: string; season: string; weight: number }[];
+  comps: { name: string; season: string; age?: number; weight: number }[];
 };
 
 export type StoredProjection = {
@@ -31,7 +31,7 @@ const SIMS = 4000;
 const SEASON_DAYS = 174;
 const seasonStart = (endYear: number) => Date.UTC(endYear - 1, 9, 21);
 
-const label = (endYear: number) => `${endYear - 1}–${String(endYear).slice(-2)}`;
+export const label = (endYear: number) => `${endYear - 1}–${String(endYear).slice(-2)}`;
 const endYearOf = (season: string) => Number.parseInt(season.slice(0, 4), 10) + 1;
 
 const rng = (seed: number) => {
@@ -57,16 +57,27 @@ const pick = (weights: number[], random: () => number) => {
   return weights.length - 1;
 };
 
-const quantile = (sorted: number[], q: number) => {
+export const quantile = (sorted: number[], q: number) => {
   const pos = (sorted.length - 1) * q;
   const lo = Math.floor(pos);
   const hi = Math.ceil(pos);
   return sorted[lo] + (sorted[hi] - sorted[lo]) * (pos - lo);
 };
 
-type SeasonOutlook = {
+export type SeasonOutlook = {
   /** Win Shares so far this season. */
   soFar: number;
+  /** Minutes played so far this season. */
+  minutesSoFar: number;
+  /** Preseason projected Win Shares per 48 minutes. */
+  priorRate: number;
+  /** Rate after blending in this season's play. */
+  rate: number;
+  /** Preseason projected full-season Win Shares and minutes. */
+  priorTotal: number;
+  priorMinutes: number;
+  /** Share of the season still to play. */
+  remaining: number;
   /** Expected Win Shares for the rest of this season. */
   rest: number;
   /** Talent multiplier from this season's play so far, relative to the preseason projection. */
@@ -76,6 +87,15 @@ type SeasonOutlook = {
 };
 
 type Simulator = { outlook: SeasonOutlook; draw: (random: () => number) => number[]; careerNow: number };
+
+export type Scenario = {
+  /** Multiplier on every future season (1 = the model as built). */
+  scale?: number;
+  /** Season-to-season noise, as a log-normal sigma. Defaults to the tuned value. */
+  noise?: number;
+  /** Last season played (end year). Seasons after it count as zero. */
+  retireAfter?: number | null;
+};
 
 /**
  * Sets up draws of a player's remaining seasons, starting with the current one.
@@ -88,7 +108,11 @@ const simulator = (
   inProgress: boolean,
   teamGamesPlayed: number,
   params: StoredProjection["params"],
+  scenario: Scenario = {},
 ): Simulator => {
+  const scale = scenario.scale ?? 1;
+  const sigma = scenario.noise ?? params.noise;
+  const retireAfter = scenario.retireAfter ?? Infinity;
   const seasonRow = inProgress ? player.seasons.find((s) => endYearOf(s.season) === current) : undefined;
   const soFar = seasonRow?.winShares ?? 0;
   const minutesSoFar =
@@ -119,14 +143,32 @@ const simulator = (
     const path = stored.paths[pick(live, random)];
     const out: number[] = [];
     for (let h = offset; h < path.length; h++) {
-      const noise = Math.exp(params.noise * gaussian(random) - params.noise ** 2 / 2);
-      if (h === offset) out.push(Math.max(rest * (priorTotal > 0 ? path[h] / priorTotal : 0) * noise, 0));
-      else out.push(path[h] * form * noise);
+      const noise = Math.exp(sigma * gaussian(random) - sigma ** 2 / 2);
+      const year = stored.checkpoint + 1 + h;
+      const value =
+        h === offset ? Math.max(rest * (priorTotal > 0 ? path[h] / priorTotal : 0) * noise, 0) : path[h] * form * noise;
+      out.push(year > retireAfter ? 0 : value * scale);
     }
     return out;
   };
 
-  return { outlook: { soFar, rest, form, total: soFar + rest }, draw, careerNow };
+  const restScaled = (stored.checkpoint + 1 + offset > retireAfter ? 0 : rest) * scale;
+  return {
+    outlook: {
+      soFar,
+      minutesSoFar,
+      priorRate,
+      rate,
+      priorTotal,
+      priorMinutes,
+      remaining,
+      rest: restScaled,
+      form,
+      total: soFar + restScaled,
+    },
+    draw,
+    careerNow,
+  };
 };
 
 export type Crossover = {
@@ -144,7 +186,31 @@ export type Crossover = {
   current: string;
 };
 
-export const projectCrossover = (stored: StoredProjection, wemby: Player, horford: Player, asOf: Date): Crossover => {
+/** One simulated pair of careers: cumulative Win Shares at the end of each season, and the crossing season. */
+export type SimulatedCareer = { wemby: number[]; horford: number[]; crossed: number };
+
+export type Simulation = {
+  /** End year of the season in progress, or the next one to start. */
+  current: number;
+  inProgress: boolean;
+  teamGames: number;
+  /** Seasons simulated, starting with the current one. */
+  horizon: number;
+  wembyNow: number;
+  horfordNow: number;
+  wemby: SeasonOutlook;
+  horford: SeasonOutlook;
+  /** Runs the next `n` simulations. Results are deterministic for a given setup and call sequence. */
+  run: (n: number) => SimulatedCareer[];
+};
+
+export const createSimulation = (
+  stored: StoredProjection,
+  wemby: Player,
+  horford: Player,
+  asOf: Date,
+  scenario: { wemby?: Scenario; horford?: Scenario } = {},
+): Simulation => {
   // The season in progress, or the next one to start.
   const month = asOf.getUTCMonth();
   const year = asOf.getUTCFullYear();
@@ -155,31 +221,56 @@ export const projectCrossover = (stored: StoredProjection, wemby: Player, horfor
   const gamesFor = (p: Player) => p.seasons.find((s) => endYearOf(s.season) === current)?.games ?? 0;
   const teamGames = Math.max(estimatedTeamGames, gamesFor(wemby), gamesFor(horford));
 
-  const w = simulator(stored.wemby, wemby, current, inProgress, teamGames, stored.params);
-  const h = simulator(stored.horford, horford, current, inProgress, teamGames, stored.params);
+  const w = simulator(stored.wemby, wemby, current, inProgress, teamGames, stored.params, scenario.wemby);
+  const h = simulator(stored.horford, horford, current, inProgress, teamGames, stored.params, scenario.horford);
 
   const random = rng(current * 7919 + Math.round(wemby.winShares * 10) + Math.round(horford.winShares * 10) * 31);
-  const crossings: number[] = [];
-  const wembyThisSeason: number[] = [];
-  const wembyCareer: number[] = [];
-  const horfordFinal: number[] = [];
-  const horizon = stored.wemby.paths[0].length;
-  for (let i = 0; i < SIMS; i++) {
-    const wp = w.draw(random);
-    const hp = h.draw(random);
-    let wTotal = w.careerNow;
-    let hTotal = h.careerNow;
-    let crossed = wTotal >= hTotal ? current - 1 : Infinity;
-    for (let s = 0; s < horizon; s++) {
-      wTotal += wp[s] ?? 0;
-      hTotal += hp[s] ?? 0;
-      if (crossed === Infinity && wTotal >= hTotal) crossed = current + s;
+  const horizon = stored.wemby.paths[0].length - Math.max(current - stored.wemby.checkpoint - 1, 0);
+
+  const run = (n: number) => {
+    const out: SimulatedCareer[] = [];
+    for (let i = 0; i < n; i++) {
+      const wp = w.draw(random);
+      const hp = h.draw(random);
+      let wTotal = w.careerNow;
+      let hTotal = h.careerNow;
+      let crossed = wTotal >= hTotal ? current - 1 : Infinity;
+      const wc: number[] = [];
+      const hc: number[] = [];
+      for (let s = 0; s < horizon; s++) {
+        wTotal += wp[s] ?? 0;
+        hTotal += hp[s] ?? 0;
+        wc.push(wTotal);
+        hc.push(hTotal);
+        if (crossed === Infinity && wTotal >= hTotal) crossed = current + s;
+      }
+      out.push({ wemby: wc, horford: hc, crossed });
     }
-    crossings.push(crossed);
-    wembyThisSeason.push(w.outlook.soFar + (wp[0] ?? 0));
-    wembyCareer.push(wTotal);
-    horfordFinal.push(hTotal);
-  }
+    return out;
+  };
+
+  return {
+    current,
+    inProgress,
+    teamGames,
+    horizon,
+    wembyNow: w.careerNow,
+    horfordNow: h.careerNow,
+    wemby: w.outlook,
+    horford: h.outlook,
+    run,
+  };
+};
+
+export const projectCrossover = (stored: StoredProjection, wemby: Player, horford: Player, asOf: Date): Crossover => {
+  const sim = createSimulation(stored, wemby, horford, asOf);
+  const { current } = sim;
+  const runs = sim.run(SIMS);
+  const crossings = runs.map((r) => r.crossed);
+  // This season's total is the first simulated season added to what he had before it.
+  const wembyThisSeason = runs.map((r) => sim.wemby.soFar + (r.wemby[0] - sim.wembyNow));
+  const wembyCareer = runs.map((r) => r.wemby.at(-1) ?? sim.wembyNow);
+  const horfordFinal = runs.map((r) => r.horford.at(-1) ?? sim.horfordNow);
   const passed = crossings.filter((c) => Number.isFinite(c)).sort((a, b) => a - b);
   const sortedSeason = [...wembyThisSeason].sort((a, b) => a - b);
   // Crossing years are whole seasons, so take the season the quantile falls in rather than interpolating.
@@ -191,12 +282,12 @@ export const projectCrossover = (stored: StoredProjection, wemby: Player, horfor
 
   return {
     wemby: {
-      ...w.outlook,
+      ...sim.wemby,
       low: quantile(sortedSeason, 0.1),
       high: quantile(sortedSeason, 0.9),
       careerMedian: quantile([...wembyCareer].sort((a, b) => a - b), 0.5),
     },
-    horford: { ...h.outlook, finalMedian: quantile([...horfordFinal].sort((a, b) => a - b), 0.5) },
+    horford: { ...sim.horford, finalMedian: quantile([...horfordFinal].sort((a, b) => a - b), 0.5) },
     chance: passed.length / SIMS,
     median: seasonLabel(0.5),
     low: seasonLabel(0.1),

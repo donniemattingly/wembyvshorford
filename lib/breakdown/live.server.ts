@@ -11,10 +11,23 @@ export const LIVE_KEY = "breakdown-live:v1";
 
 export type SeasonLine = { season: string; team: string; games: number; box: Box; context: string };
 
+/** One game from a player's log. */
+export type GameLine = {
+  date: string;
+  /** Opponent abbreviation. */
+  opp: string;
+  away: boolean;
+  /** As listed, e.g. "W, 118-104". */
+  result: string;
+  box: Box;
+};
+
 export type LiveBreakdown = {
   updatedAt: string;
   players: { wemby?: SeasonLine; horford?: SeasonLine };
   contexts: Record<string, TeamContext>;
+  /** This season's games, measured against the season's team totals. */
+  games?: { wemby?: GameLine[]; horford?: GameLine[] };
 };
 
 // Basketball Reference has renamed some columns over the years; try each spelling.
@@ -52,9 +65,8 @@ const number = (row: string, key: keyof typeof COLUMNS, prefix = ""): number => 
   throw new Error(`${key} was not found`);
 };
 
-const boxOf = (row: string, prefix = ""): Box & { g: number } => ({
-  g: number(row, "g"),
-  mp: number(row, "mp"),
+/** Everything but games and minutes, which game logs write differently. */
+const countsOf = (row: string, prefix = ""): Omit<Box, "mp"> => ({
   fg: number(row, "fg", prefix),
   fga: number(row, "fga", prefix),
   fg3: number(row, "fg3", prefix),
@@ -69,6 +81,12 @@ const boxOf = (row: string, prefix = ""): Box & { g: number } => ({
   tov: number(row, "tov", prefix),
   pf: number(row, "pf", prefix),
   pts: number(row, "pts", prefix),
+});
+
+const boxOf = (row: string, prefix = ""): Box & { g: number } => ({
+  g: number(row, "g"),
+  mp: number(row, "mp"),
+  ...countsOf(row, prefix),
 });
 
 const table = (html: string, id: RegExp): string | null =>
@@ -102,22 +120,66 @@ export const parseLeagueTotals = (html: string, team: string): TeamContext => {
   return { team: boxOf(tr), opp, league: boxOf(lr) };
 };
 
+const minutes = (text: string | null): number => {
+  const [m, sec = "0"] = (text ?? "").split(":");
+  const value = Number.parseInt(m, 10) + Number.parseInt(sec, 10) / 60;
+  return Number.isFinite(value) ? value : 0;
+};
+
+/** Regular-season games from a player's game log page. Games he did not play are left out. */
+export const parseGameLog = (html: string): GameLine[] => {
+  const log = table(html, /^(player_game_log_reg|pgl_basic)$/);
+  if (!log) throw new Error("Game log table was not found");
+  const games: GameLine[] = [];
+  for (const row of rows(log)) {
+    const date = cell(row, "date") ?? cell(row, "date_game");
+    const mp = minutes(cell(row, "mp"));
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date) || mp <= 0) continue;
+    games.push({
+      date,
+      opp: cell(row, "opp_name_abbr") ?? cell(row, "opp_id") ?? "",
+      away: cell(row, "game_location") === "@",
+      result: (cell(row, "game_result") ?? "").replace(/\s+/g, " "),
+      box: { mp, ...countsOf(row) },
+    });
+  }
+  return games;
+};
+
+const COUNTED: (keyof Box)[] = ["fg", "fga", "fg3", "fg3a", "ft", "fta", "orb", "drb", "ast", "stl", "blk", "tov", "pf", "pts"];
+
+/** True when a game log adds up to the season totals row, which has already passed the Win Shares check. */
+export const logMatchesSeason = (games: GameLine[], season: SeasonLine): boolean =>
+  games.length === season.games &&
+  COUNTED.every((k) => games.reduce((t, g) => t + g.box[k], 0) === season.box[k]) &&
+  Math.abs(games.reduce((t, g) => t + g.box.mp, 0) - season.box.mp) <= Math.max(2, games.length / 2);
+
+const gameLogUrl = (playerUrl: string, season: string) =>
+  playerUrl.replace(/\.html$/, `/gamelog/${Number.parseInt(season.slice(0, 4), 10) + 1}`);
+
 const leagueUrl = (season: string) =>
   `https://www.basketball-reference.com/leagues/NBA_${Number.parseInt(season.slice(0, 4), 10) + 1}.html`;
 
 /** Scrapes this season's totals and stores them if they reproduce Basketball Reference's Win Shares. */
+const PLAYER_URLS = {
+  wemby: "https://www.basketball-reference.com/players/w/wembavi01.html",
+  horford: "https://www.basketball-reference.com/players/h/horfoal01.html",
+};
+
+const fetchHtml = async (url: string) => {
+  const response = await fetch(url, { headers: { "user-agent": "wembyvshorford/2.0 (+https://wembyvshorford.com)" } });
+  if (!response.ok) throw new Error(`Basketball Reference returned ${response.status} for ${url}`);
+  return response.text();
+};
+
 export const refreshBreakdown = async (kv: KVNamespace, pages: PlayerPages, stats: CareerStats): Promise<void> => {
   try {
     const season = stats.wemby.seasons.at(-1)?.season;
     if (!season) return;
-    const league = await fetch(leagueUrl(season), {
-      headers: { "user-agent": "wembyvshorford/2.0 (+https://wembyvshorford.com)" },
-    });
-    if (!league.ok) throw new Error(`Basketball Reference returned ${league.status}`);
-    const leagueHtml = await league.text();
+    const leagueHtml = await fetchHtml(leagueUrl(season));
 
     const previous = await kv.get<LiveBreakdown>(LIVE_KEY, "json");
-    const next: LiveBreakdown = { updatedAt: stats.updatedAt, players: {}, contexts: {} };
+    const next: LiveBreakdown = { updatedAt: stats.updatedAt, players: {}, contexts: {}, games: {} };
     for (const name of ["wemby", "horford"] as const) {
       const listed = stats[name].seasons.find((s) => s.season === season);
       const line = listed && parseSeasonTotals(pages[name], season);
@@ -130,12 +192,23 @@ export const refreshBreakdown = async (kv: KVNamespace, pages: PlayerPages, stat
         if (kept) {
           next.players[name] = kept;
           next.contexts[kept.context] = previous.contexts[kept.context];
+          if (previous.games?.[name]) next.games![name] = previous.games[name];
         }
         continue;
       }
       const key = `${season} ${line.team}`;
-      next.players[name] = { season, ...line, context: key };
+      const seasonLine = { season, ...line, context: key };
+      next.players[name] = seasonLine;
       next.contexts[key] = context;
+
+      // The game log is kept only if it adds up to the checked season totals.
+      try {
+        const games = parseGameLog(await fetchHtml(gameLogUrl(PLAYER_URLS[name], season)));
+        if (logMatchesSeason(games, seasonLine)) next.games![name] = games;
+        else console.error(`Game log for ${name} does not add up to the season totals`);
+      } catch (error) {
+        console.error(`Game log refresh failed for ${name}`, error);
+      }
     }
     if (next.players.wemby || next.players.horford) await kv.put(LIVE_KEY, JSON.stringify(next));
   } catch (error) {

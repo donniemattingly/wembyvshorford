@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { env } from "cloudflare:workers";
 import StatBreakdown from "@/components/breakdown/StatBreakdown";
-import { breakdownSeasons } from "@/lib/breakdown/data";
+import { breakdownGames, breakdownSeasons } from "@/lib/breakdown/data";
 import { getLiveBreakdown } from "@/lib/breakdown/live.server";
 import { cardPath } from "@/lib/og/card";
 import { getCareerStats } from "@/lib/stats.server";
@@ -45,7 +45,7 @@ export default async function BreakdownPage() {
         </p>
       </header>
 
-      <StatBreakdown seasons={breakdownSeasons(live)} />
+      <StatBreakdown seasons={breakdownSeasons(live)} games={breakdownGames(live)} />
 
       <footer className="shell">
         <p>THE WIN SHARE INDEX</p>

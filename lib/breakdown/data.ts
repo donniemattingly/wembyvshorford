@@ -1,7 +1,7 @@
 // Every season's stat breakdown for both players: finished seasons from seasons.json, and the season in progress
 // from the daily scrape when it is newer.
 import { type Attribution, type Box, type TeamContext, attribute } from "@/lib/breakdown/engine";
-import type { LiveBreakdown } from "@/lib/breakdown/live.server";
+import type { GameLine, LiveBreakdown } from "@/lib/breakdown/live.server";
 import seasonsData from "@/lib/breakdown/seasons.json";
 
 export type PlayerKey = "wemby" | "horford";
@@ -40,6 +40,20 @@ export const breakdownSeasons = (live: LiveBreakdown | null): Record<PlayerKey, 
       }
     }
     out[name] = seasons;
+  }
+  return out;
+};
+
+/** This season's games for each player, with the team totals to measure them against. */
+export type GameLog = { games: GameLine[]; context: TeamContext };
+
+export const breakdownGames = (live: LiveBreakdown | null): Partial<Record<PlayerKey, GameLog>> => {
+  const out: Partial<Record<PlayerKey, GameLog>> = {};
+  for (const name of ["wemby", "horford"] as const) {
+    const games = live?.games?.[name];
+    const line = live?.players[name];
+    const context = line && live.contexts[line.context];
+    if (games?.length && context) out[name] = { games, context };
   }
   return out;
 };

@@ -1,7 +1,8 @@
 import handler from "vinext/server/fetch-handler";
 import { recordEntry } from "@/lib/model/tracker";
 import { serveCard } from "@/lib/og/render";
-import { STATS_KEY, refreshIfNeeded, scrapeCareerStats } from "@/lib/stats.server";
+import { refreshBreakdown } from "@/lib/breakdown/live.server";
+import { STATS_KEY, fetchPlayerPages, parseCareerStats, refreshIfNeeded } from "@/lib/stats.server";
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
@@ -27,10 +28,13 @@ export default {
   // Daily refresh from Basketball Reference (see triggers.crons in wrangler.jsonc).
   async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext) {
     ctx.waitUntil(
-      scrapeCareerStats().then(async (stats) => {
+      fetchPlayerPages().then(async (pages) => {
+        const stats = parseCareerStats(pages);
         await env.VINEXT_KV_CACHE.put(STATS_KEY, JSON.stringify(stats), { metadata: { refreshedAt: stats.updatedAt } });
         // Log the model's outlook after each new game for the /model page.
         await recordEntry(env.VINEXT_KV_CACHE, stats);
+        // This season's box-score totals for the /breakdown page.
+        await refreshBreakdown(env.VINEXT_KV_CACHE, pages, stats);
       }),
     );
   },

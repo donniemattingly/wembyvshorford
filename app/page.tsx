@@ -172,6 +172,9 @@ export default async function Home() {
           <p>WIN SHARES BY CAREER YEAR</p>
         </div>
         <CareerCharts wemby={wemby} horford={horford} />
+        <a className="model-link breakdown-link" href="/breakdown">
+          Where the win shares come from, stat by stat <span aria-hidden="true">→</span>
+        </a>
       </section>
 
       <ModelProjection label={n(3)} model={model} caught={caught} />

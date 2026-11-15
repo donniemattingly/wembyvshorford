@@ -1,4 +1,5 @@
 import { env } from "cloudflare:workers";
+import { refreshBreakdown } from "@/lib/breakdown/live.server";
 import { recordEntry } from "@/lib/model/tracker";
 
 export const horfordUrl = "https://www.basketball-reference.com/players/h/horfoal01.html";
@@ -115,18 +116,29 @@ const parsePlayer = (html: string): Player => {
   return { games: readStat(totals, "games"), winShares: readStat(totals, "ws"), seasons };
 };
 
-const fetchPlayer = async (url: string): Promise<Player> => {
+const fetchPage = async (url: string): Promise<string> => {
   const response = await fetch(url, {
     headers: { "user-agent": "wembyvshorford/2.0 (+https://wembyvshorford.com)" },
   });
   if (!response.ok) throw new Error(`Basketball Reference returned ${response.status}`);
-  return parsePlayer(await response.text());
+  return response.text();
 };
 
-export const scrapeCareerStats = async (): Promise<CareerStats> => {
-  const [wemby, horford] = await Promise.all([fetchPlayer(wembyUrl), fetchPlayer(horfordUrl)]);
-  return { wemby, horford, updatedAt: new Date().toISOString() };
+/** Both players' Basketball Reference pages, raw. The stat breakdown reads their totals tables too. */
+export type PlayerPages = { wemby: string; horford: string };
+
+export const fetchPlayerPages = async (): Promise<PlayerPages> => {
+  const [wemby, horford] = await Promise.all([fetchPage(wembyUrl), fetchPage(horfordUrl)]);
+  return { wemby, horford };
 };
+
+export const parseCareerStats = (pages: PlayerPages): CareerStats => ({
+  wemby: parsePlayer(pages.wemby),
+  horford: parsePlayer(pages.horford),
+  updatedAt: new Date().toISOString(),
+});
+
+export const scrapeCareerStats = async (): Promise<CareerStats> => parseCareerStats(await fetchPlayerPages());
 
 const isCareerStats = (value: unknown): value is CareerStats => {
   const stats = value as CareerStats | null;
@@ -165,9 +177,11 @@ export const refreshIfNeeded = async (kv: KVNamespace): Promise<void> => {
     if (!needsRefresh(await kv.get(STATS_KEY, "json"))) return;
     if (await kv.get(REFRESH_LOCK_KEY)) return;
     await kv.put(REFRESH_LOCK_KEY, new Date().toISOString(), { expirationTtl: 3600 });
-    const stats = await scrapeCareerStats();
+    const pages = await fetchPlayerPages();
+    const stats = parseCareerStats(pages);
     await kv.put(STATS_KEY, JSON.stringify(stats), { metadata: { refreshedAt: stats.updatedAt } });
     await recordEntry(kv, stats);
+    await refreshBreakdown(kv, pages, stats);
   } catch (error) {
     console.error("Career stats refresh failed", error);
   }

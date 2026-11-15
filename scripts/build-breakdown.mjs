@@ -1,39 +1,15 @@
 // Builds lib/breakdown/seasons.json: Wembanyama's and Horford's box-score totals for every season, with the team,
 // opponent and league totals Win Shares need, and each season's Win Shares split by stat (lib/breakdown/engine.ts).
 // The /breakdown page reads it. Rerun after each season, or after changing the engine.
-// Inputs are the Player Totals.csv, Team Totals.csv and Opponent Totals.csv files from
-// https://github.com/sumitrodatta/bball-reference-datasets (scraped from Basketball Reference).
-//   node scripts/build-breakdown.mjs "Player Totals.csv" "Team Totals.csv" "Opponent Totals.csv"
-import { readFileSync, writeFileSync } from "node:fs";
+// Reads the player_totals, team_totals and opponent_totals tables of the SQLite cache (scripts/lib/bbref-db.mjs),
+// which loads them from https://github.com/sumitrodatta/bball-reference-datasets (scraped from Basketball Reference)
+// the first time. Pass --refresh to download the latest CSVs first.
+//   node scripts/build-breakdown.mjs [--refresh]
+import { writeFileSync } from "node:fs";
 import { attribute } from "../lib/breakdown/engine.ts";
-
-const [playersPath, teamsPath, oppPath] = process.argv.slice(2);
-if (!oppPath) {
-  throw new Error("usage: build-breakdown.mjs 'Player Totals.csv' 'Team Totals.csv' 'Opponent Totals.csv'");
-}
+import { withDatasets } from "./lib/bbref-db.mjs";
 
 const PLAYERS = { wemby: "wembavi01", horford: "horfoal01" };
-
-const parseCsv = (text) => {
-  const rows = [];
-  for (const line of text.split(/\r?\n/)) {
-    if (!line) continue;
-    const cells = [];
-    let cell = "";
-    let quoted = false;
-    for (const ch of line) {
-      if (ch === '"') quoted = !quoted;
-      else if (ch === "," && !quoted) {
-        cells.push(cell);
-        cell = "";
-      } else cell += ch;
-    }
-    cells.push(cell);
-    rows.push(cells);
-  }
-  const [header, ...body] = rows;
-  return body.map((r) => Object.fromEntries(header.map((h, i) => [h, r[i]])));
-};
 
 const label = (endYear) => `${endYear - 1}-${String(endYear).slice(-2)}`;
 
@@ -44,24 +20,24 @@ const FIELDS = { mp: "mp", fg: "fg", fga: "fga", fg3: "x3p", fg3a: "x3pa", ft: "
 const box = (row, prefix = "") =>
   Object.fromEntries(
     Object.entries(FIELDS).map(([key, col]) => {
-      const value = Number(row[key === "mp" ? "mp" : prefix + col]);
+      const cell = row[key === "mp" ? "mp" : prefix + col];
+      const value = cell == null ? Number.NaN : Number(cell);
       if (!Number.isFinite(value)) throw new Error(`${row.season} ${row.team}: ${col} is missing`);
       return [key, value];
     }),
   );
 
-const teams = parseCsv(readFileSync(teamsPath, "utf8")).filter((r) => r.lg === "NBA");
-const opps = parseCsv(readFileSync(oppPath, "utf8")).filter((r) => r.lg === "NBA");
-const totals = parseCsv(readFileSync(playersPath, "utf8")).filter((r) => r.lg === "NBA");
+const db = await withDatasets("player_totals", "team_totals", "opponent_totals");
+const one = (sql, ...params) => db.prepare(sql).get(...params);
 
-const latest = Math.max(...teams.map((r) => Number(r.season)));
+const latest = one("SELECT MAX(season) AS season FROM team_totals WHERE lg = 'NBA'").season;
 const contexts = {};
 const contextFor = (season, abbr) => {
   const key = `${season} ${abbr}`;
   if (contexts[key]) return key;
-  const team = teams.find((r) => r.season === season && r.abbreviation === abbr);
-  const opp = opps.find((r) => r.season === season && r.abbreviation === abbr);
-  const league = teams.find((r) => r.season === season && r.team === "League Average");
+  const team = one("SELECT * FROM team_totals WHERE lg = 'NBA' AND season = ? AND abbreviation = ? ORDER BY rowid", season, abbr);
+  const opp = one("SELECT * FROM opponent_totals WHERE lg = 'NBA' AND season = ? AND abbreviation = ? ORDER BY rowid", season, abbr);
+  const league = one("SELECT * FROM team_totals WHERE lg = 'NBA' AND season = ? AND team = 'League Average' ORDER BY rowid", season);
   if (!team || !opp || !league) throw new Error(`No team totals for ${key}`);
   contexts[key] = {
     team: { g: Number(team.g), ...box(team) },
@@ -79,10 +55,14 @@ const rounded = (value) =>
 
 const players = {};
 for (const [name, id] of Object.entries(PLAYERS)) {
-  const rows = totals
-    .filter((r) => r.player_id === id && !/^\dTM$|^TOT$/.test(r.team))
-    .sort((a, b) => Number(a.season) - Number(b.season));
-  if (rows.length === 0) throw new Error(`${id} is not in ${playersPath}`);
+  // One row per team; a traded player's combined rows (2TM, 3TM, TOT) are left out.
+  const rows = db
+    .prepare(
+      `SELECT * FROM player_totals WHERE lg = 'NBA' AND player_id = ? AND team NOT GLOB '[0-9]TM' AND team <> 'TOT'
+       ORDER BY season, rowid`,
+    )
+    .all(id);
+  if (rows.length === 0) throw new Error(`${id} is not in player_totals`);
   players[name] = rows.map((r) => {
     const context = contextFor(r.season, r.team);
     const line = box(r);

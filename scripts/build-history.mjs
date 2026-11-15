@@ -1,43 +1,22 @@
 // Builds lib/model/history.json from Basketball Reference season tables.
-// Inputs are the Advanced.csv, Team Summaries.csv, Draft Pick History.csv and Player Career Info.csv files from
-// https://github.com/sumitrodatta/bball-reference-datasets (scraped from Basketball Reference).
-//   node scripts/build-history.mjs Advanced.csv "Team Summaries.csv" "Draft Pick History.csv" "Player Career Info.csv"
-import { readFileSync, writeFileSync } from "node:fs";
+// Reads the advanced, team_summaries, draft_pick_history and player_career_info tables of the SQLite cache
+// (scripts/lib/bbref-db.mjs), which loads them from https://github.com/sumitrodatta/bball-reference-datasets
+// (scraped from Basketball Reference) the first time. Pass --refresh to download the latest CSVs first.
+//   node scripts/build-history.mjs [--refresh]
+import { writeFileSync } from "node:fs";
+import { withDatasets } from "./lib/bbref-db.mjs";
 
-const [advancedPath, teamsPath, draftPath, infoPath] = process.argv.slice(2);
-if (!advancedPath || !teamsPath || !draftPath || !infoPath) {
-  throw new Error("usage: build-history.mjs Advanced.csv 'Team Summaries.csv' 'Draft Pick History.csv' 'Player Career Info.csv'");
-}
-
-const parseCsv = (text) => {
-  const rows = [];
-  for (const line of text.split(/\r?\n/)) {
-    if (!line) continue;
-    const cells = [];
-    let cell = "";
-    let quoted = false;
-    for (const ch of line) {
-      if (ch === '"') quoted = !quoted;
-      else if (ch === "," && !quoted) {
-        cells.push(cell);
-        cell = "";
-      } else cell += ch;
-    }
-    cells.push(cell);
-    rows.push(cells);
-  }
-  const [header, ...body] = rows;
-  return body.map((r) => Object.fromEntries(header.map((h, i) => [h, r[i]])));
-};
+const db = await withDatasets("advanced", "team_summaries", "draft_pick_history", "player_career_info");
+const all = (sql, ...params) => db.prepare(sql).all(...params);
 
 const FIRST_SEASON = 1960;
 
 // Games on the schedule each season, from team records (wins + losses), using the most common value.
 const teamGames = new Map();
-for (const t of parseCsv(readFileSync(teamsPath, "utf8"))) {
-  const season = Number(t.season);
-  const games = Number(t.w) + Number(t.l);
-  if (!Number.isFinite(games) || t.team === "League Average") continue;
+for (const t of all("SELECT season, lg, team, w, l FROM team_summaries ORDER BY rowid")) {
+  const season = t.season;
+  if (t.w == null || t.l == null || t.team === "League Average") continue;
+  const games = t.w + t.l;
   const key = `${t.lg}:${season}`;
   const counts = teamGames.get(key) ?? new Map();
   counts.set(games, (counts.get(games) ?? 0) + 1);
@@ -53,9 +32,13 @@ const scheduled = (lg, season) => {
 
 // One row per player-season. Traded players have a combined row (2TM, 3TM, TOT) plus one per team.
 const bySeason = new Map();
-for (const r of parseCsv(readFileSync(advancedPath, "utf8"))) {
-  const season = Number(r.season);
-  if (season < FIRST_SEASON || !r.player_id) continue;
+const advanced = all(
+  `SELECT season, lg, player, player_id, age, team, g, mp, ws, bpm FROM advanced
+   WHERE season >= ? AND player_id IS NOT NULL ORDER BY rowid`,
+  FIRST_SEASON,
+);
+for (const r of advanced) {
+  const season = r.season;
   const key = `${r.player_id}:${season}:${r.lg}`;
   const combined = /^(\dTM|TOT)$/.test(r.team);
   const existing = bySeason.get(key);
@@ -70,7 +53,7 @@ for (const r of bySeason.values()) {
   const mp = Number(r.mp) || 0;
   const ws = Number(r.ws) || 0;
   const len = scheduled(r.lg, r.season);
-  const bpm = r.bpm === "" || r.bpm === "NA" || r.bpm == null ? null : Number(r.bpm);
+  const bpm = r.bpm == null ? null : Number(r.bpm);
   // Rare seasons split across NBA and ABA are summed.
   const prev = p.rows.get(r.season);
   if (prev) {
@@ -85,13 +68,13 @@ for (const r of bySeason.values()) {
 
 // NBA draft slot (first time drafted into the NBA) and height in inches.
 const picks = new Map();
-for (const d of parseCsv(readFileSync(draftPath, "utf8"))) {
-  if (d.lg !== "NBA" || !d.player_id || picks.has(d.player_id)) continue;
+for (const d of all("SELECT player_id, overall_pick FROM draft_pick_history WHERE lg = 'NBA' AND player_id IS NOT NULL ORDER BY rowid")) {
+  if (picks.has(d.player_id)) continue;
   const pick = Number(d.overall_pick);
   if (Number.isFinite(pick) && pick > 0) picks.set(d.player_id, pick);
 }
 const heights = new Map();
-for (const i of parseCsv(readFileSync(infoPath, "utf8"))) {
+for (const i of all("SELECT player_id, ht_in_in FROM player_career_info ORDER BY rowid")) {
   const ht = Number(i.ht_in_in);
   if (Number.isFinite(ht) && ht > 0) heights.set(i.player_id, ht);
 }

@@ -1,4 +1,5 @@
 import { env } from "cloudflare:workers";
+import { fetchBbref } from "@/lib/bbref/fetch.server";
 import { refreshBreakdown } from "@/lib/breakdown/live.server";
 import { recordEntry } from "@/lib/model/tracker";
 
@@ -116,19 +117,11 @@ const parsePlayer = (html: string): Player => {
   return { games: readStat(totals, "games"), winShares: readStat(totals, "ws"), seasons };
 };
 
-const fetchPage = async (url: string): Promise<string> => {
-  const response = await fetch(url, {
-    headers: { "user-agent": "wembyvshorford/2.0 (+https://wembyvshorford.com)" },
-  });
-  if (!response.ok) throw new Error(`Basketball Reference returned ${response.status}`);
-  return response.text();
-};
-
 /** Both players' Basketball Reference pages, raw. The stat breakdown reads their totals tables too. */
 export type PlayerPages = { wemby: string; horford: string };
 
 export const fetchPlayerPages = async (): Promise<PlayerPages> => {
-  const [wemby, horford] = await Promise.all([fetchPage(wembyUrl), fetchPage(horfordUrl)]);
+  const [wemby, horford] = await Promise.all([fetchBbref(wembyUrl), fetchBbref(horfordUrl)]);
   return { wemby, horford };
 };
 

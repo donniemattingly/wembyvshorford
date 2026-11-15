@@ -22,10 +22,10 @@ The crossover forecast comes from a comparable-player model in `lib/model/`.
 
 `/model` (`app/model/page.tsx`, `components/model/`) shows the work: the comparables, the in-season blend, and the 4,000 simulations run in the browser a batch per frame, with what-if controls for Wembanyama's level, season-to-season noise and Horford's retirement. With the default settings it uses the same seed as the home page, so both show the same numbers.
 
-After each season, download the latest CSVs and rebuild:
+After each season, rebuild with the latest data (`--refresh` downloads fresh CSVs into the SQLite cache, below):
 
 ```sh
-node scripts/build-history.mjs Advanced.csv "Team Summaries.csv" "Draft Pick History.csv" "Player Career Info.csv"
+node scripts/build-history.mjs --refresh
 node scripts/backtest.ts --tune
 node scripts/project.ts
 ```
@@ -38,11 +38,31 @@ node scripts/project.ts
 - `lib/breakdown/seasons.json` holds every finished season's totals and breakdown. Rebuild it after each season (and after any engine change) from the same CSV source:
 
 ```sh
-node scripts/build-breakdown.mjs "Player Totals.csv" "Team Totals.csv" "Opponent Totals.csv"
+node scripts/build-breakdown.mjs --refresh
 ```
 
 - The daily scrape also reads this season's totals from each player's page and the league page (`lib/breakdown/live.server.ts`, KV key `breakdown-live:v1`). It only stores them when the Win Shares they rebuild match the ones Basketball Reference lists, so a markup change can't put a wrong breakdown on the page. It also reads both players' game logs for the season and keeps them only if the games add up to those checked season totals. The game view scores each game against the team's season totals, since Basketball Reference publishes no single-game Win Shares.
 - `components/breakdown/ContributionChart.tsx` draws any two breakdowns side by side, which is what makes it work for careers, seasons and games alike.
+
+## Basketball Reference cache
+
+Everything pulled from Basketball Reference goes through a read-through SQLite cache: look in SQLite first, and only fetch (then store) on a miss. Code reads from SQLite rather than CSVs.
+
+- **Offline** (`scripts/lib/bbref-db.mjs`, Node's built-in `node:sqlite`, no dependencies). The file is `data/bbref.sqlite` (git-ignored), or wherever `BBREF_CACHE` points. `http_cache` holds raw responses by URL. Each [sumitrodatta/bball-reference-datasets](https://github.com/sumitrodatta/bball-reference-datasets) CSV becomes a table with the CSV's column names (`advanced`, `player_totals`, `team_totals`, `opponent_totals`, `team_summaries`, `draft_pick_history`, `player_career_info`, `player_per_game`), loaded the first time a script asks for it. The build scripts query those tables.
+- **Worker** (`lib/bbref/fetch.server.ts`). `fetchBbref(url)` is the only way the Worker reads Basketball Reference (player pages, the league page, game logs). It keeps the same `http_cache` table in D1, reuses a copy for 6 hours, and falls back to the last copy if the site fails. Until the `BBREF_DB` binding exists it is a plain fetch. To turn it on, create the database and add the binding to `wrangler.jsonc`:
+
+  ```sh
+  npx wrangler d1 create bbref
+  # then in wrangler.jsonc: "d1_databases": [{ "binding": "BBREF_DB", "database_name": "bbref", "database_id": "<id it printed>" }]
+  ```
+
+```sh
+node scripts/bbref-cache.mjs                        # what is cached
+node scripts/bbref-cache.mjs refresh [table ...]    # download datasets again
+node scripts/bbref-cache.mjs import player_totals ~/Downloads/"Player Totals.csv"   # a CSV you downloaded yourself
+node scripts/bbref-cache.mjs fetch <url> [hours]    # any page, through the cache
+node scripts/bbref-cache.mjs sql "SELECT season, ws FROM advanced WHERE player_id = 'wembavi01'"
+```
 
 ## Develop
 

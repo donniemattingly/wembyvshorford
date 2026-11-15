@@ -4,6 +4,7 @@
 // Each scrape is checked before it is stored: Win Shares rebuilt from the scraped totals must match the Win Shares
 // Basketball Reference lists for the same season. If the markup changes and a number is misread, the check fails
 // and the page keeps the last good totals (or the static file) instead of showing a wrong breakdown.
+import { fetchBbref } from "@/lib/bbref/fetch.server";
 import { type Box, type TeamContext, winShares } from "@/lib/breakdown/engine";
 import type { CareerStats, PlayerPages } from "@/lib/stats.server";
 
@@ -166,17 +167,11 @@ const PLAYER_URLS = {
   horford: "https://www.basketball-reference.com/players/h/horfoal01.html",
 };
 
-const fetchHtml = async (url: string) => {
-  const response = await fetch(url, { headers: { "user-agent": "wembyvshorford/2.0 (+https://wembyvshorford.com)" } });
-  if (!response.ok) throw new Error(`Basketball Reference returned ${response.status} for ${url}`);
-  return response.text();
-};
-
 export const refreshBreakdown = async (kv: KVNamespace, pages: PlayerPages, stats: CareerStats): Promise<void> => {
   try {
     const season = stats.wemby.seasons.at(-1)?.season;
     if (!season) return;
-    const leagueHtml = await fetchHtml(leagueUrl(season));
+    const leagueHtml = await fetchBbref(leagueUrl(season));
 
     const previous = await kv.get<LiveBreakdown>(LIVE_KEY, "json");
     const next: LiveBreakdown = { updatedAt: stats.updatedAt, players: {}, contexts: {}, games: {} };
@@ -203,7 +198,7 @@ export const refreshBreakdown = async (kv: KVNamespace, pages: PlayerPages, stat
 
       // The game log is kept only if it adds up to the checked season totals.
       try {
-        const games = parseGameLog(await fetchHtml(gameLogUrl(PLAYER_URLS[name], season)));
+        const games = parseGameLog(await fetchBbref(gameLogUrl(PLAYER_URLS[name], season)));
         if (logMatchesSeason(games, seasonLine)) next.games![name] = games;
         else console.error(`Game log for ${name} does not add up to the season totals`);
       } catch (error) {

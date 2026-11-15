@@ -32,7 +32,7 @@ node scripts/project.ts
 
 ## Stat breakdown
 
-`/breakdown` splits each player's Win Shares by stat, for a career or any season.
+`/breakdown` splits each player's Win Shares by stat, for a career, any season, or any game this season.
 
 - `lib/breakdown/engine.ts` rebuilds Basketball Reference's Offensive and Defensive Win Shares from a box-score line plus team, opponent and league totals (it matches their numbers to the tenth), and splits them across the stats with Aumann-Shapley attribution, so the parts add up exactly. The defensive credit for minutes on the floor gets its own row.
 - `lib/breakdown/seasons.json` holds every finished season's totals and breakdown. Rebuild it after each season (and after any engine change) from the same CSV source:
@@ -41,7 +41,7 @@ node scripts/project.ts
 node scripts/build-breakdown.mjs "Player Totals.csv" "Team Totals.csv" "Opponent Totals.csv"
 ```
 
-- The daily scrape also reads this season's totals from each player's page and the league page (`lib/breakdown/live.server.ts`, KV key `breakdown-live:v1`). It only stores them when the Win Shares they rebuild match the ones Basketball Reference lists, so a markup change can't put a wrong breakdown on the page.
+- The daily scrape also reads this season's totals from each player's page and the league page (`lib/breakdown/live.server.ts`, KV key `breakdown-live:v1`). It only stores them when the Win Shares they rebuild match the ones Basketball Reference lists, so a markup change can't put a wrong breakdown on the page. It also reads both players' game logs for the season and keeps them only if the games add up to those checked season totals. The game view scores each game against the team's season totals, since Basketball Reference publishes no single-game Win Shares.
 - `components/breakdown/ContributionChart.tsx` draws any two breakdowns side by side, which is what makes it work for careers, seasons and games alike.
 
 ## Develop

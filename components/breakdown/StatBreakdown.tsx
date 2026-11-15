@@ -1,20 +1,74 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { type Attribution, sumAttributions } from "@/lib/breakdown/engine";
-import type { PlayerKey, SeasonBreakdown } from "@/lib/breakdown/data";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { type Attribution, attribute, sumAttributions, winShares } from "@/lib/breakdown/engine";
+import type { GameLog, PlayerKey, SeasonBreakdown } from "@/lib/breakdown/data";
 import { NET_ROWS, SPLIT_ROWS, rowValue } from "@/lib/breakdown/rows";
 import { useReveal, useTween } from "@/components/model/hooks";
 import ContributionChart, { type Rate } from "./ContributionChart";
 
-type Scope = "career" | "season";
+type Scope = "career" | "season" | "game";
 type Detail = "net" | "split";
 
 const NAMES: Record<PlayerKey, string> = { wemby: "Wembanyama", horford: "Horford" };
-const f1 = (v: number) => v.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const f1 = (v: number) =>
+  (Math.abs(v) < 0.05 ? 0 : v).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const f3 = (v: number) => `${v < 0 ? "−" : ""}${Math.abs(v).toFixed(3).replace(/^0/, "")}`;
 const int = (v: number) => Math.round(v).toLocaleString("en-US");
 const short = (season: string) => season.slice(2);
+const day = (date: string, opts: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" }) =>
+  new Date(`${date}T12:00:00Z`).toLocaleDateString("en-US", { ...opts, timeZone: "UTC" });
+
+/** A player's games as picker chips: date, opponent and Win Shares (cheap, so worked out for all of them). */
+const gameChips = (log: GameLog | undefined) =>
+  (log?.games ?? []).map((g) => {
+    const { ows, dws } = winShares(g.box, log!.context);
+    return { ...g, ws: ows + dws };
+  });
+
+/** Game chips, scrolled to the newest game. */
+function GamePicker({
+  k,
+  name,
+  chips,
+  at,
+  set,
+}: {
+  k: "w" | "h";
+  name: string;
+  chips: ReturnType<typeof gameChips>;
+  at: number;
+  set: (i: number) => void;
+}) {
+  const strip = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = strip.current;
+    if (el) el.scrollLeft = el.scrollWidth;
+  }, []);
+  return (
+    <div className={`bd-season-row bd-games bd-${k}`}>
+      <span>{name.toUpperCase()}</span>
+      <div ref={strip} role="group" aria-label={`${name} game`}>
+        {chips.map((g, i) => (
+          <button
+            key={g.date}
+            type="button"
+            className={i === at ? "on" : ""}
+            aria-pressed={i === at}
+            title={`${day(g.date, { month: "long", day: "numeric" })} ${g.away ? "at" : "vs"} ${g.opp} · ${f1(g.ws)} WS`}
+            onClick={() => set(i)}
+          >
+            <b>{day(g.date).toUpperCase()}</b>
+            <small>
+              {g.away ? "@" : ""}
+              {g.opp} · {f1(g.ws)}
+            </small>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 /** Seasons in career order, with any mid-season trade stints merged. */
 const bySeason = (list: SeasonBreakdown[]) => {
@@ -71,7 +125,13 @@ function Score({ k, name, a, caption }: { k: "w" | "h"; name: string; a: Attribu
   );
 }
 
-export default function StatBreakdown({ seasons }: { seasons: Record<PlayerKey, SeasonBreakdown[]> }) {
+export default function StatBreakdown({
+  seasons,
+  games,
+}: {
+  seasons: Record<PlayerKey, SeasonBreakdown[]>;
+  games: Partial<Record<PlayerKey, GameLog>>;
+}) {
   const w = useMemo(() => bySeason(seasons.wemby), [seasons]);
   const h = useMemo(() => bySeason(seasons.horford), [seasons]);
   const career = useMemo(
@@ -92,8 +152,32 @@ export default function StatBreakdown({ seasons }: { seasons: Record<PlayerKey, 
   const [hi, setHi] = useState(Math.min(first, h.length - 1));
   const [ref, inView] = useReveal<HTMLDivElement>();
 
+  // Games need both players' logs, since the chart always compares two lines.
+  const wg = useMemo(() => gameChips(games.wemby), [games]);
+  const hg = useMemo(() => gameChips(games.horford), [games]);
+  const hasGames = wg.length > 0 && hg.length > 0;
+  const [wgi, setWgi] = useState(wg.length - 1);
+  const [hgi, setHgi] = useState(hg.length - 1);
+  const gameAttribution = useMemo(
+    () =>
+      hasGames
+        ? {
+            wemby: attribute(wg[wgi].box, games.wemby!.context, 1),
+            horford: attribute(hg[hgi].box, games.horford!.context, 1),
+          }
+        : null,
+    [hasGames, wg, hg, wgi, hgi, games],
+  );
+
   const pick = (key: PlayerKey) => {
     if (scope === "career") return { a: career[key], caption: careerCaption(key) };
+    if (scope === "game" && gameAttribution) {
+      const g = key === "wemby" ? wg[wgi] : hg[hgi];
+      return {
+        a: gameAttribution[key],
+        caption: `${day(g.date, { month: "short", day: "numeric", year: "numeric" })} · ${g.away ? "at" : "vs"} ${g.opp} · ${g.result} · ${int(g.box.mp)} min`,
+      };
+    }
     const s = key === "wemby" ? w[wi] : h[hi];
     const year = (key === "wemby" ? wi : hi) + 1;
     return {
@@ -146,11 +230,16 @@ export default function StatBreakdown({ seasons }: { seasons: Record<PlayerKey, 
         <div className="section-label inverse">
           <span>01</span>
           <h2 id="bd-heading">STAT BY STAT</h2>
-          <p>{scope === "career" ? "CAREER" : "SEASON"} · REGULAR SEASON</p>
+          <p>{scope.toUpperCase()} · REGULAR SEASON</p>
         </div>
 
         <div className="controls bd-controls">
-          <Segmented label="SCOPE" value={scope} options={[["career", "CAREER"], ["season", "SEASON"]]} onChange={setScope} />
+          <Segmented
+            label="SCOPE"
+            value={scope}
+            options={[["career", "CAREER"], ["season", "SEASON"], ...(hasGames ? [["game", "GAME"] as ["game", string]] : [])]}
+            onChange={setScope}
+          />
           <Segmented label="RATE" value={rate} options={[["per48", "PER 48 MIN"], ["total", "TOTAL"]]} onChange={setRate} />
           <Segmented label="SHOTS" value={detail} options={[["net", "NET"], ["split", "MAKES & MISSES"]]} onChange={setDetail} />
         </div>
@@ -187,6 +276,18 @@ export default function StatBreakdown({ seasons }: { seasons: Record<PlayerKey, 
                 Match Horford to Wembanyama&apos;s year {wi + 1} →
               </button>
             )}
+          </div>
+        )}
+
+        {scope === "game" && hasGames && (
+          <div className="bd-seasons">
+            <GamePicker k="w" name={NAMES.wemby} chips={wg} at={wgi} set={setWgi} />
+            <GamePicker k="h" name={NAMES.horford} chips={hg} at={hgi} set={setHgi} />
+            <p className="bd-game-note">
+              Basketball Reference doesn&apos;t publish Win Shares for single games. These use each game&apos;s box score
+              against the team&apos;s season totals, so a season&apos;s games add up close to, but not exactly, its
+              total.
+            </p>
           </div>
         )}
 

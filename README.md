@@ -30,6 +30,20 @@ node scripts/backtest.ts --tune
 node scripts/project.ts
 ```
 
+## Stat breakdown
+
+`/breakdown` splits each player's Win Shares by stat, for a career or any season.
+
+- `lib/breakdown/engine.ts` rebuilds Basketball Reference's Offensive and Defensive Win Shares from a box-score line plus team, opponent and league totals (it matches their numbers to the tenth), and splits them across the stats with Aumann-Shapley attribution, so the parts add up exactly. The defensive credit for minutes on the floor gets its own row.
+- `lib/breakdown/seasons.json` holds every finished season's totals and breakdown. Rebuild it after each season (and after any engine change) from the same CSV source:
+
+```sh
+node scripts/build-breakdown.mjs "Player Totals.csv" "Team Totals.csv" "Opponent Totals.csv"
+```
+
+- The daily scrape also reads this season's totals from each player's page and the league page (`lib/breakdown/live.server.ts`, KV key `breakdown-live:v1`). It only stores them when the Win Shares they rebuild match the ones Basketball Reference lists, so a markup change can't put a wrong breakdown on the page.
+- `components/breakdown/ContributionChart.tsx` draws any two breakdowns side by side, which is what makes it work for careers, seasons and games alike.
+
 ## Develop
 
 ```sh

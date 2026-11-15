@@ -37,3 +37,6 @@ next-env.d.ts
 /dist/
 .vinext/
 .wrangler/
+
+# Basketball Reference SQLite cache (scripts/lib/bbref-db.mjs)
+/data/

@@ -1,6 +1,6 @@
 // Every season's stat breakdown for both players: finished seasons from seasons.json, and the season in progress
 // from the daily scrape when it is newer.
-import { type Attribution, type Box, type TeamContext, attribute } from "@/lib/breakdown/engine";
+import { type Attribution, type Box, type TeamContext, attribute, calibrate } from "@/lib/breakdown/engine";
 import type { GameLine, LiveBreakdown } from "@/lib/breakdown/live.server";
 import seasonsData from "@/lib/breakdown/seasons.json";
 
@@ -29,8 +29,9 @@ export const breakdownSeasons = (live: LiveBreakdown | null): Record<PlayerKey, 
       const same = seasons.filter((s) => s.season === current.season);
       const storedGames = same.reduce((t, s) => t + s.games, 0);
       if (current.games >= storedGames) {
-        const { season, team, games, box } = current;
-        const fresh = { season, team, games, attribution: attribute(box, context, games) };
+        const { season, team, games, box, target } = current;
+        const raw = attribute(box, context, games);
+        const fresh = { season, team, games, attribution: target ? calibrate(raw, target) : raw };
         const at = seasons.findIndex((s) => s.season === current.season);
         const rest = seasons.filter((s) => s.season !== current.season);
         if (at === -1) rest.push(fresh);

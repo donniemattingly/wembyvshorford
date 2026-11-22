@@ -45,7 +45,15 @@ export default async function BreakdownPage() {
         </p>
       </header>
 
-      <StatBreakdown seasons={breakdownSeasons(live)} games={breakdownGames(live)} />
+      <StatBreakdown
+        seasons={breakdownSeasons(live)}
+        games={breakdownGames(live)}
+        listed={{
+          season: stats.wemby.seasons.at(-1)?.season ?? "",
+          wemby: stats.wemby.seasons.at(-1)?.games ?? 0,
+          horford: stats.horford.seasons.find((s) => s.season === stats.wemby.seasons.at(-1)?.season)?.games ?? 0,
+        }}
+      />
 
       <footer className="shell">
         <p>THE WIN SHARE INDEX</p>

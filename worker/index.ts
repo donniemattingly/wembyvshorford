@@ -16,7 +16,7 @@ export default {
       if (url.pathname === "/og.png" && (request.method === "GET" || request.method === "HEAD")) {
         return await serveCard(request, env, ctx);
       }
-      if (request.method === "GET" && url.pathname === "/") ctx.waitUntil(refreshIfNeeded(env.VINEXT_KV_CACHE));
+      if (request.method === "GET" && (url.pathname === "/" || url.pathname === "/breakdown")) ctx.waitUntil(refreshIfNeeded(env.VINEXT_KV_CACHE));
       return await handler.fetch(request, env, ctx);
     } catch (error) {
       console.error("Unhandled application error", error);

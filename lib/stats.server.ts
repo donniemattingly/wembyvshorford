@@ -1,6 +1,6 @@
 import { env } from "cloudflare:workers";
 import { fetchBbref } from "@/lib/bbref/fetch.server";
-import { refreshBreakdown } from "@/lib/breakdown/live.server";
+import { type BreakdownStatus, STATUS_KEY as BREAKDOWN_STATUS_KEY, refreshBreakdown } from "@/lib/breakdown/live.server";
 import { recordEntry } from "@/lib/model/tracker";
 
 export const horfordUrl = "https://www.basketball-reference.com/players/h/horfoal01.html";
@@ -17,6 +17,8 @@ export type Season = {
   winSharesPer48?: number | null;
   minutes?: number | null;
   bpm?: number | null;
+  ows?: number | null;
+  dws?: number | null;
 };
 
 export type Player = {
@@ -109,6 +111,8 @@ const parsePlayer = (html: string): Player => {
         winSharesPer48: readOptionalStat(row, "ws_per_48"),
         minutes: readOptionalStat(row, "mp"),
         bpm: readOptionalStat(row, "bpm"),
+        ows: readOptionalStat(row, "ows"),
+        dws: readOptionalStat(row, "dws"),
       };
     },
   );
@@ -156,18 +160,23 @@ export const getCareerStats = async (): Promise<CareerStats> => {
 const REFRESH_LOCK_KEY = "career-stats:refresh-lock";
 const STALE_AFTER_MS = 26 * 60 * 60 * 1000;
 
-// True when KV holds nothing usable, is older than a day, or predates per-season games and WS/48.
-const needsRefresh = (stats: unknown): boolean => {
+const stale = (iso: string | undefined) => !iso || Date.now() - new Date(iso).getTime() > STALE_AFTER_MS;
+
+// True when KV holds nothing usable, is older than a day, predates per-season games or OWS/DWS, or the stat
+// breakdown hasn't been refreshed in a day.
+const needsRefresh = (stats: unknown, breakdown: BreakdownStatus | null): boolean => {
   if (!isCareerStats(stats)) return true;
-  if (Date.now() - new Date(stats.updatedAt).getTime() > STALE_AFTER_MS) return true;
-  return stats.wemby.seasons.at(-1)?.games == null;
+  if (stale(stats.updatedAt) || stale(breakdown?.at)) return true;
+  const latest = stats.wemby.seasons.at(-1);
+  return latest?.games == null || latest.ows === undefined;
 };
 
 // Scrape out of band when KV is missing, stale or old-format, at most once an hour, so the page fixes
 // itself without waiting for the next daily cron.
 export const refreshIfNeeded = async (kv: KVNamespace): Promise<void> => {
   try {
-    if (!needsRefresh(await kv.get(STATS_KEY, "json"))) return;
+    const [stored, breakdown] = await Promise.all([kv.get(STATS_KEY, "json"), kv.get<BreakdownStatus>(BREAKDOWN_STATUS_KEY, "json")]);
+    if (!needsRefresh(stored, breakdown)) return;
     if (await kv.get(REFRESH_LOCK_KEY)) return;
     await kv.put(REFRESH_LOCK_KEY, new Date().toISOString(), { expirationTtl: 3600 });
     const pages = await fetchPlayerPages();

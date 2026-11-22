@@ -128,9 +128,12 @@ function Score({ k, name, a, caption }: { k: "w" | "h"; name: string; a: Attribu
 export default function StatBreakdown({
   seasons,
   games,
+  listed,
 }: {
   seasons: Record<PlayerKey, SeasonBreakdown[]>;
   games: Partial<Record<PlayerKey, GameLog>>;
+  /** Games Basketball Reference lists for the latest season, to say when the breakdown is behind. */
+  listed: { season: string; wemby: number; horford: number };
 }) {
   const w = useMemo(() => bySeason(seasons.wemby), [seasons]);
   const h = useMemo(() => bySeason(seasons.horford), [seasons]);
@@ -147,7 +150,7 @@ export default function StatBreakdown({
   const [detail, setDetail] = useState<Detail>("net");
   // Default season view: Wembanyama's latest season against Horford's at the same point in his career. A season
   // only a few games old is too noisy to lead with, so it starts on the one before.
-  const first = w.length > 1 && w[w.length - 1].attribution.games < 20 ? w.length - 2 : w.length - 1;
+  const first = w.length > 1 && w[w.length - 1].attribution.games < 10 ? w.length - 2 : w.length - 1;
   const [wi, setWi] = useState(first);
   const [hi, setHi] = useState(Math.min(first, h.length - 1));
   const [ref, inView] = useReveal<HTMLDivElement>();
@@ -182,8 +185,13 @@ export default function StatBreakdown({
     const year = (key === "wemby" ? wi : hi) + 1;
     return {
       a: s.attribution,
-      caption: `${s.season} · ${s.teams.join("/")} · year ${year} · ${int(s.attribution.games)} games`,
+      caption: `${s.season} · ${s.teams.join("/")} · year ${year} · ${gamesLabel(key, s.season, s.attribution.games)}`,
     };
+  };
+  // The season in progress says how far it runs, and whether it trails Basketball Reference's count.
+  const gamesLabel = (key: PlayerKey, season: string, played: number) => {
+    if (season !== listed.season) return `${int(played)} games`;
+    return played < listed[key] ? `through ${int(played)} of ${int(listed[key])} games` : `${int(played)} games so far`;
   };
   const careerCaption = (key: PlayerKey) => {
     const list = key === "wemby" ? w : h;

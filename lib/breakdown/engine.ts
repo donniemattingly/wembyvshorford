@@ -234,3 +234,21 @@ export const sumAttributions = (list: Attribution[]): Attribution => {
   }
   return out;
 };
+
+const OFFENSE: EventKey[] = ["fg2", "fg2Miss", "fg3", "fg3Miss", "ft", "ftMiss", "ast", "orb", "tov"];
+
+/**
+ * Moves an attribution onto known offensive and defensive Win Shares, for a line measured against approximate team
+ * totals (an earlier season's). The offensive gap comes from league scoring levels, so it is shared across the
+ * offensive stats in proportion to their size. The defensive gap comes almost entirely from how good the team's
+ * defense is, which is what the floor-time row measures, so it goes there. Tested on past seasons measured against
+ * the season before, this lands within a few hundredths on most stats.
+ */
+export const calibrate = (a: Attribution, target: { ows: number; dws: number }): Attribution => {
+  const parts = { ...a.parts };
+  const gap = target.ows - a.ows;
+  const weight = OFFENSE.reduce((s, k) => s + Math.abs(parts[k]), 0);
+  if (weight) for (const k of OFFENSE) parts[k] += (gap * Math.abs(parts[k])) / weight;
+  const floor = a.floor + (target.dws - a.dws) + (weight ? 0 : gap);
+  return { ...a, parts, floor, ows: target.ows, dws: target.dws, ws: target.ows + target.dws };
+};
